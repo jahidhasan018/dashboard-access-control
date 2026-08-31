@@ -66,8 +66,11 @@ final class CodeInjector {
 	 * @param string $type 'css' or 'js'.
 	 */
 	private function get_allowed_code_for_user( string $type ): string {
-		$user_id   = get_current_user_id();
-		$role_ids  = $this->resolver->resolve( $user_id );
+		$user = wp_get_current_user();
+		if ( ! $user->exists() ) {
+			return '';
+		}
+		$role_ids  = $this->resolver->resolve( $user );
 		$parts     = [];
 
 		foreach ( $role_ids as $role_id ) {
