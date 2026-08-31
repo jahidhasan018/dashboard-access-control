@@ -190,11 +190,8 @@ final class Plugin {
 
 		$this->container->set(
 			CodeInjector::class,
-			function ( Container $c ): CodeInjector {
-				return new CodeInjector(
-					$c->get( RoleResolver::class ),
-					$c->get( Options::class )
-				);
+			function (): CodeInjector {
+				return new CodeInjector();
 			}
 		);
 

@@ -113,16 +113,9 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\CustomCodeTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\CustomCodeTab::label(),
 			'callback' => function () {
-				$injector = new \DashboardAccessControl\CustomCode\CodeInjector(
-					new \DashboardAccessControl\RoleAccess\RoleResolver(
-						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
-						new \DashboardAccessControl\RoleAccess\ConflictResolver( $this->options )
-					),
-					$this->options
-				);
 				$tab = new \DashboardAccessControl\Admin\Tabs\CustomCodeTab(
 					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
-					$injector
+					new \DashboardAccessControl\CustomCode\CodeInjector()
 				);
 				$tab->render();
 			},

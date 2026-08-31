@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace DashboardAccessControl\CustomCode;
 
-use DashboardAccessControl\RoleAccess\RoleResolver;
-use DashboardAccessControl\Support\Options;
-
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -15,12 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 final class CodeInjector {
 
-	private RoleResolver $resolver;
-	private Options $options;
-
-	public function __construct( RoleResolver $resolver, Options $options ) {
-		$this->resolver = $resolver;
-		$this->options  = $options;
+	public function __construct() {
 	}
 
 	/**
@@ -70,11 +62,10 @@ final class CodeInjector {
 		if ( ! $user->exists() ) {
 			return '';
 		}
-		$role_ids  = $this->resolver->resolve( $user );
-		$parts     = [];
 
-		foreach ( $role_ids as $role_id ) {
-			$meta = $this->get_meta( $role_id );
+		$parts = [];
+		foreach ( $user->roles as $role_slug ) {
+			$meta = $this->get_meta( $role_slug );
 			if ( ! empty( $meta[ $type ] ) ) {
 				$parts[] = $meta[ $type ];
 			}
