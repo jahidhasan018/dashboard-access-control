@@ -92,6 +92,14 @@ final class SettingsPage {
 			},
 		];
 
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\WhiteLabelTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\WhiteLabelTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\WhiteLabelTab( $this->options );
+				$tab->render();
+			},
+		];
+
 		$this->tabs['general'] = [
 			'label'    => __( 'General', 'dashboard-access-control' ),
 			'callback' => [ $this, 'render_general_tab' ],

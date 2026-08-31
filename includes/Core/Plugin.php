@@ -18,6 +18,9 @@ use DashboardAccessControl\Enforcement\CapabilityEnforcer;
 use DashboardAccessControl\Enforcement\RouteGuard;
 use DashboardAccessControl\Enforcement\DashboardWidgetEnforcer;
 use DashboardAccessControl\Enforcement\AdminBarEnforcer;
+use DashboardAccessControl\Admin\Tabs\WhiteLabelTab;
+use DashboardAccessControl\WhiteLabel\BrandingService;
+use DashboardAccessControl\WhiteLabel\ColorSchemeService;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -119,6 +122,30 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			WhiteLabelTab::class,
+			function ( Container $c ): WhiteLabelTab {
+				return new WhiteLabelTab( $c->get( Options::class ) );
+			}
+		);
+
+		$this->container->set(
+			BrandingService::class,
+			function ( Container $c ): BrandingService {
+				return new BrandingService(
+					$c->get( Options::class ),
+					$c->get( RoleResolver::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			ColorSchemeService::class,
+			function ( Container $c ): ColorSchemeService {
+				return new ColorSchemeService( $c->get( Options::class ) );
+			}
+		);
+
+		$this->container->set(
 			MenuEnforcer::class,
 			function ( Container $c ): MenuEnforcer {
 				return new MenuEnforcer( $c->get( RoleResolver::class ) );
@@ -200,6 +227,18 @@ final class Plugin {
 		// Admin bar tab: handle saves.
 		$admin_bar_tab = $this->container->get( AdminBarTab::class );
 		add_action( 'admin_init', [ $admin_bar_tab, 'handle_save' ] );
+
+		// White label tab: handle saves.
+		$white_label_tab = $this->container->get( WhiteLabelTab::class );
+		add_action( 'admin_init', [ $white_label_tab, 'handle_save' ] );
+
+		// Branding service: apply all white label filters.
+		$branding = $this->container->get( BrandingService::class );
+		$branding->init();
+
+		// Color scheme service.
+		$color_scheme = $this->container->get( ColorSchemeService::class );
+		$color_scheme->init();
 
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );
