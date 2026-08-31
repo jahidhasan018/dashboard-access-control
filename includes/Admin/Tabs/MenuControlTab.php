@@ -48,6 +48,17 @@ final class MenuControlTab {
 		global $menu, $submenu;
 		self::$captured_menu    = $menu ?? [];
 		self::$captured_submenu = $submenu ?? [];
+
+		// Store available menus so handle_save (on admin_init) can access them.
+		$available = [];
+		foreach ( self::$captured_menu as $menu_item ) {
+			$slug  = $menu_item[2] ?? '';
+			$label = wp_strip_all_tags( $menu_item[0] ?? '' );
+			if ( '' !== $slug && ! str_starts_with( $slug, 'separator' ) ) {
+				$available[ $slug ] = $label;
+			}
+		}
+		update_option( 'dac_available_menus', $available );
 	}
 
 	/**
@@ -400,11 +411,14 @@ final class MenuControlTab {
 			}
 		}
 
-		// Load existing profile to preserve labels, icons, and previously saved menus.
+		// Load ALL available menus from the option saved during capture_menu.
+		$available = get_option( 'dac_available_menus', [] );
+
+		// Load existing profile to preserve labels, icons.
 		$profile = $this->repository->get( $role_slug );
 		$existing_menus = $profile[ Constants::PROFILE_MENUS ] ?? [];
 
-		// Build a lookup of existing menus by slug.
+		// Build a lookup of existing menus by slug for labels/icons.
 		$existing_by_slug = [];
 		foreach ( $existing_menus as $item ) {
 			$slug = $item['slug'] ?? '';
@@ -413,30 +427,17 @@ final class MenuControlTab {
 			}
 		}
 
-		// Rebuild menus: update hidden status for submitted slugs, preserve others.
+		// Rebuild menus: iterate ALL available menus, set hidden status from form.
 		$menus = [];
-		$processed_slugs = [];
-		foreach ( $existing_menus as $item ) {
-			$slug = $item['slug'] ?? '';
+		foreach ( $available as $slug => $label ) {
+			// Use existing label/icon if available, otherwise use captured label.
+			$existing = $existing_by_slug[ $slug ] ?? [];
 			$menus[] = [
 				'slug'   => $slug,
 				'hidden' => in_array( $slug, $hidden_slugs, true ),
-				'label'  => $item['label'] ?? '',
-				'icon'   => $item['icon'] ?? '',
+				'label'  => $existing['label'] ?? $label,
+				'icon'   => $existing['icon'] ?? '',
 			];
-			$processed_slugs[] = $slug;
-		}
-
-		// Add any newly hidden menus not already in the profile.
-		foreach ( $hidden_slugs as $slug ) {
-			if ( ! in_array( $slug, $processed_slugs, true ) ) {
-				$menus[] = [
-					'slug'   => $slug,
-					'hidden' => true,
-					'label'  => '',
-					'icon'   => '',
-				];
-			}
 		}
 
 		$profile[ Constants::PROFILE_MENUS ] = $menus;
