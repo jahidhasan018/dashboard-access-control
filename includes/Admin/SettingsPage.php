@@ -50,11 +50,32 @@ final class SettingsPage {
 	 * Register the default tabs.
 	 */
 	private function register_tabs(): void {
-		$this->tabs = [
-			'general' => [
-				'label'    => __( 'General', 'dashboard-access-control' ),
-				'callback' => [ $this, 'render_general_tab' ],
-			],
+		$this->tabs = [];
+
+		// Core tabs registered here.
+		$this->tabs[ RoleManagerTab::id() ] = [
+			'label'    => RoleManagerTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\RoleManagerTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
+				$tab->render();
+			},
+		];
+
+		$this->tabs[ MenuControlTab::id() ] = [
+			'label'    => MenuControlTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\MenuControlTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
+				$tab->render();
+			},
+		];
+
+		$this->tabs['general'] = [
+			'label'    => __( 'General', 'dashboard-access-control' ),
+			'callback' => [ $this, 'render_general_tab' ],
 		];
 
 		/**
@@ -72,6 +93,9 @@ final class SettingsPage {
 		if ( ! current_user_can( Constants::CAP_MANAGE_SETTINGS ) ) {
 			return;
 		}
+
+		// Render admin notices before the page content.
+		Notices::render_all();
 
 		$active_tab = $this->get_active_tab();
 

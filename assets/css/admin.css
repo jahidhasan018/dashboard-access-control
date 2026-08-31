@@ -1,1 +1,44 @@
 /* Dashboard Access Control — Admin Styles */
+
+.dac-tab-content {
+	margin-top: 20px;
+}
+
+.dac-role-selector {
+	margin-bottom: 20px;
+	padding: 15px;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+}
+
+.dac-role-selector label {
+	margin-right: 10px;
+}
+
+.dac-role-selector select {
+	min-width: 250px;
+}
+
+.dac-menu-table th,
+.dac-menu-table td {
+	vertical-align: middle;
+}
+
+.dac-menu-table input[type="radio"] {
+	margin: 0;
+}
+
+.dac-menu-table code {
+	font-size: 12px;
+	color: #666;
+}
+
+.dac-role-manager h2,
+.dac-menu-control h2 {
+	margin-top: 10px;
+}
+
+.dac-role-manager .form-table th {
+	width: 200px;
+}
