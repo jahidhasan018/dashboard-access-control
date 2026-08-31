@@ -110,7 +110,7 @@ final class MenuControlTab {
 		foreach ( self::$captured_menu as $menu_item ) {
 			$slug  = $menu_item[2] ?? '';
 			$label = wp_strip_all_tags( $menu_item[0] ?? '' );
-			if ( '' === $slug ) {
+			if ( '' === $slug || str_starts_with( $slug, 'separator' ) ) {
 				continue;
 			}
 
