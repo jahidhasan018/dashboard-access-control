@@ -11,10 +11,10 @@
 - [x] Phase 4 — White Label
 - [x] Phase 5 — Content Restrictions + AJAX/REST Guards
 - [x] Phase 6 — Custom Code Tab + Tools
-- [ ] Phase 7 — Polish
+- [x] Phase 7 — Polish
 
-## Current phase: Phase 7
-## Current task: Polish & verification
+## Current phase: Complete
+## Current task: All phases done
 
 ## Session log
 - 2026-08-31 — Phase 0 complete. Docs scaffolded.
@@ -22,9 +22,10 @@
 - 2026-08-31 — Phase 2 complete. Role Manager + Menu Control with 3-layer enforcement.
 - 2026-08-31 — Phase 3 complete. Dashboard Widgets + Admin Bar control per role.
 - 2026-08-31 — Phase 4 complete. White Label — branding, logos, login page, footer, Howdy, favicon.
-- 2026-08-31 — Phase 5 complete. Content Restrictions (meta boxes, screen options, help tab, notices, file editor) + Layer 4 guards (AjaxGuard, RestGuard, XmlRpcGuard).
-- 2026-08-31 — Phase 6 complete. Custom Code tab (CSS/JS per role via hidden CPT `dac_custom_code`, CodeInjector outputs in admin_head/admin_footer) + Tools tab (JSON export/import with merge, backup before import, reset to defaults, uninstall toggle) + uninstall.php cleans CPT + last_backup option.
-- 2026-08-31 — UI fix: Admin Menu Control redesigned with accordion UI, toggle switches, search, bulk actions. Fixed empty labels, removed separators, fixed memory exhaustion.
+- 2026-08-31 — Phase 5 complete. Content Restrictions + Layer 4 guards (AJAX, REST, XML-RPC).
+- 2026-08-31 — Phase 6 complete. Custom Code (CSS/JS per role via hidden CPT) + Tools (export/import/reset/uninstall toggle).
+- 2026-08-31 — Phase 7 complete. .pot file, readme.txt, CHANGELOG.md, PHPUnit tests, QA matrix, PHPDoc on all classes.
+- 2026-08-31 — Bug fixes: RoleResolver type mismatch, missing OPT_LAST_BACKUP constant.
 
 ## Known issues / carried-over notes
-- (none yet)
+- (none)
