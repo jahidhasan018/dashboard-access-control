@@ -21,7 +21,7 @@ delete_option( Constants::OPT_ROLE_PROFILES );
 delete_option( Constants::OPT_WHITE_LABEL );
 delete_option( Constants::OPT_GENERAL );
 delete_option( Constants::OPT_DB_VERSION );
-delete_option( Constants::OPT_PREFIX . 'last_backup' );
+delete_option( Constants::OPT_LAST_BACKUP );
 
 // Remove all custom code posts.
 $custom_posts = get_posts( [

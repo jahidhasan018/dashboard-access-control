@@ -148,7 +148,7 @@ final class ToolsTab {
 			'white_label' => get_option( Constants::OPT_WHITE_LABEL, [] ),
 			'general'     => get_option( Constants::OPT_GENERAL, [] ),
 		];
-		set_option( Constants::OPT_PREFIX . 'last_backup', $backup );
+		set_option( Constants::OPT_LAST_BACKUP, $backup );
 	}
 
 	/**
@@ -215,7 +215,7 @@ final class ToolsTab {
 	public function render(): void {
 		$general         = get_option( Constants::OPT_GENERAL, [] );
 		$delete_on_unist = $general[ Constants::GENERAL_DELETE_ON_UNINSTALL ] ?? false;
-		$backup          = get_option( Constants::OPT_PREFIX . 'last_backup', null );
+		$backup          = get_option( Constants::OPT_LAST_BACKUP, null );
 		?>
 		<div class="dac-section">
 			<h2 class="dac-section-title"><?php esc_html_e( 'Export Settings', 'dashboard-access-control' ); ?></h2>

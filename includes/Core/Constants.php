@@ -17,6 +17,7 @@ final class Constants {
 	public const OPT_WHITE_LABEL     = 'dac_white_label_settings';
 	public const OPT_GENERAL         = 'dac_general_settings';
 	public const OPT_DB_VERSION      = 'dac_db_version';
+	public const OPT_LAST_BACKUP     = 'dac_last_backup';
 
 	// ── Capabilities ───────────────────────────────────────────────────────
 	public const CAP_MANAGE_SETTINGS = 'dac_manage_settings';
