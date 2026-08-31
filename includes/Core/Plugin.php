@@ -21,6 +21,11 @@ use DashboardAccessControl\Enforcement\AdminBarEnforcer;
 use DashboardAccessControl\Admin\Tabs\WhiteLabelTab;
 use DashboardAccessControl\WhiteLabel\BrandingService;
 use DashboardAccessControl\WhiteLabel\ColorSchemeService;
+use DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab;
+use DashboardAccessControl\Enforcement\ContentRestrictionEnforcer;
+use DashboardAccessControl\Enforcement\AjaxGuard;
+use DashboardAccessControl\Enforcement\RestGuard;
+use DashboardAccessControl\Enforcement\XmlRpcGuard;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -146,6 +151,41 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			ContentRestrictionsTab::class,
+			function ( Container $c ): ContentRestrictionsTab {
+				return new ContentRestrictionsTab( $c->get( RoleProfileRepository::class ) );
+			}
+		);
+
+		$this->container->set(
+			ContentRestrictionEnforcer::class,
+			function ( Container $c ): ContentRestrictionEnforcer {
+				return new ContentRestrictionEnforcer( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
+			AjaxGuard::class,
+			function ( Container $c ): AjaxGuard {
+				return new AjaxGuard( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
+			RestGuard::class,
+			function ( Container $c ): RestGuard {
+				return new RestGuard( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
+			XmlRpcGuard::class,
+			function ( Container $c ): XmlRpcGuard {
+				return new XmlRpcGuard( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
 			MenuEnforcer::class,
 			function ( Container $c ): MenuEnforcer {
 				return new MenuEnforcer( $c->get( RoleResolver::class ) );
@@ -239,6 +279,26 @@ final class Plugin {
 		// Color scheme service.
 		$color_scheme = $this->container->get( ColorSchemeService::class );
 		$color_scheme->init();
+
+		// Content restrictions tab: handle saves.
+		$content_tab = $this->container->get( ContentRestrictionsTab::class );
+		add_action( 'admin_init', [ $content_tab, 'handle_save' ] );
+
+		// Content restriction enforcer.
+		$content_enforcer = $this->container->get( ContentRestrictionEnforcer::class );
+		$content_enforcer->init();
+
+		// AJAX guard.
+		$ajax_guard = $this->container->get( AjaxGuard::class );
+		$ajax_guard->init();
+
+		// REST guard.
+		$rest_guard = $this->container->get( RestGuard::class );
+		$rest_guard->init();
+
+		// XML-RPC guard.
+		$xmlrpc_guard = $this->container->get( XmlRpcGuard::class );
+		$xmlrpc_guard->init();
 
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );

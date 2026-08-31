@@ -9,19 +9,21 @@
 - [x] Phase 2 — Role Manager + Menu Control
 - [x] Phase 3 — Dashboard Widgets + Admin Bar
 - [x] Phase 4 — White Label
-- [ ] Phase 5 — Content Restrictions + AJAX/REST Guards
+- [x] Phase 5 — Content Restrictions + AJAX/REST Guards
 - [ ] Phase 6 — Custom Code Tab + Tools
 - [ ] Phase 7 — Polish
 
-## Current phase: Phase 5
-## Current task: ContentRestrictionsTab + AjaxGuard + RestGuard
+## Current phase: Phase 6
+## Current task: CodeInjector + ToolsTab
 
 ## Session log
-- 2026-08-31 — Phase 0 complete. Docs scaffolded. Starting Phase 1 next session.
-- 2026-08-31 — Phase 1 complete. All scaffold files created: composer.json with PSR-4 autoload, bootstrap file, Core classes (Container, Constants, Activator, Deactivator, Plugin), Admin classes (SettingsPage, Assets, Notices), Support classes (Options, Sanitizer, Capabilities), uninstall.php, empty assets. All PHP files pass syntax check. Autoloader working via Composer.
-- 2026-08-31 — Phase 2 complete. Added RoleAccess layer (RoleProfileRepository, RoleResolver, ConflictResolver, ExclusionGuard), Admin tabs (RoleManagerTab, MenuControlTab), Enforcement layer 1-3 (MenuEnforcer, CapabilityEnforcer, RouteGuard). Updated Plugin.php to wire everything. Updated SettingsPage.php with tab registration. All 20 PHP files pass syntax check.
-- 2026-08-31 — Phase 3 complete. Added DashboardWidgetsTab + DashboardWidgetEnforcer, AdminBarTab + AdminBarEnforcer. Widgets toggle per role, admin bar hidden on frontend/backend per role, specific toolbar nodes removable. wp-admin remains reachable. All 24 PHP files pass syntax check.
-- 2026-08-31 — Phase 4 complete. Added WhiteLabelTab, BrandingService (login logo/bg, admin footer, Howdy replace, favicon, version hiding, WP logo replacement), ColorSchemeService. All branding changes apply per role/globally, reversible on deactivation. All 27 PHP files pass syntax check.
+- 2026-08-31 — Phase 0 complete. Docs scaffolded.
+- 2026-08-31 — Phase 1 complete. Plugin scaffold with PSR-4 autoload, Core, Admin, Support classes.
+- 2026-08-31 — Phase 2 complete. Role Manager + Menu Control with 3-layer enforcement.
+- 2026-08-31 — Phase 3 complete. Dashboard Widgets + Admin Bar control per role.
+- 2026-08-31 — Phase 4 complete. White Label — branding, logos, login page, footer, Howdy, favicon.
+- 2026-08-31 — Phase 5 complete. Content Restrictions (meta boxes, screen options, help tab, notices, file editor) + Layer 4 guards (AjaxGuard, RestGuard, XmlRpcGuard). All 32 PHP files pass syntax check.
+- 2026-08-31 — UI fix: Admin Menu Control redesigned with accordion UI, toggle switches, search, bulk actions. Fixed empty labels (menu[0] not menu[3]), removed separators, fixed memory exhaustion from recursive rendering.
 
 ## Known issues / carried-over notes
 - (none yet)

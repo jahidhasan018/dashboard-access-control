@@ -100,6 +100,16 @@ final class SettingsPage {
 			},
 		];
 
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
+				$tab->render();
+			},
+		];
+
 		$this->tabs['general'] = [
 			'label'    => __( 'General', 'dashboard-access-control' ),
 			'callback' => [ $this, 'render_general_tab' ],
