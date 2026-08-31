@@ -112,8 +112,13 @@ final class MenuEnforcer {
 		$general = get_option( Constants::OPT_GENERAL, [] );
 		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
 
-		if ( $excluded && in_array( 'administrator', $user->roles, true ) ) {
-			return true;
+		// Only administrators can be excluded. Non-admins are always enforced.
+		if ( ! in_array( 'administrator', $user->roles, true ) ) {
+			return false;
+		}
+
+		if ( ! $excluded ) {
+			return false;
 		}
 
 		/**
@@ -122,6 +127,6 @@ final class MenuEnforcer {
 		 * @param bool     $excluded Whether excluded.
 		 * @param \WP_User $user     User object.
 		 */
-		return (bool) apply_filters( 'dac_is_user_excluded', $excluded, $user );
+		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
 	}
 }

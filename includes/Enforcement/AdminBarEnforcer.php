@@ -141,10 +141,14 @@ final class AdminBarEnforcer {
 		$general  = get_option( Constants::OPT_GENERAL, [] );
 		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
 
-		if ( $excluded && in_array( 'administrator', $user->roles, true ) ) {
-			return true;
+		if ( ! in_array( 'administrator', $user->roles, true ) ) {
+			return false;
 		}
 
-		return (bool) apply_filters( 'dac_is_user_excluded', $excluded, $user );
+		if ( ! $excluded ) {
+			return false;
+		}
+
+		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
 	}
 }
