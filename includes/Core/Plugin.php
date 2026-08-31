@@ -26,6 +26,9 @@ use DashboardAccessControl\Enforcement\ContentRestrictionEnforcer;
 use DashboardAccessControl\Enforcement\AjaxGuard;
 use DashboardAccessControl\Enforcement\RestGuard;
 use DashboardAccessControl\Enforcement\XmlRpcGuard;
+use DashboardAccessControl\CustomCode\CodeInjector;
+use DashboardAccessControl\Admin\Tabs\CustomCodeTab;
+use DashboardAccessControl\Admin\Tabs\ToolsTab;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -186,6 +189,33 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			CodeInjector::class,
+			function ( Container $c ): CodeInjector {
+				return new CodeInjector(
+					$c->get( RoleResolver::class ),
+					$c->get( Options::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			CustomCodeTab::class,
+			function ( Container $c ): CustomCodeTab {
+				return new CustomCodeTab(
+					$c->get( RoleProfileRepository::class ),
+					$c->get( CodeInjector::class )
+				);
+			}
+		);
+
+		$this->container->set(
+			ToolsTab::class,
+			function ( Container $c ): ToolsTab {
+				return new ToolsTab( $c->get( Options::class ) );
+			}
+		);
+
+		$this->container->set(
 			MenuEnforcer::class,
 			function ( Container $c ): MenuEnforcer {
 				return new MenuEnforcer( $c->get( RoleResolver::class ) );
@@ -299,6 +329,19 @@ final class Plugin {
 		// XML-RPC guard.
 		$xmlrpc_guard = $this->container->get( XmlRpcGuard::class );
 		$xmlrpc_guard->init();
+
+		// Custom code injector — register CPT + output hooks.
+		$code_injector = $this->container->get( CodeInjector::class );
+		add_action( 'init', [ CodeInjector::class, 'register_cpt' ] );
+		$code_injector->init();
+
+		// Custom code tab: handle saves.
+		$custom_code_tab = $this->container->get( CustomCodeTab::class );
+		add_action( 'admin_init', [ $custom_code_tab, 'handle_save' ] );
+
+		// Tools tab: handle saves.
+		$tools_tab = $this->container->get( ToolsTab::class );
+		add_action( 'admin_init', [ $tools_tab, 'handle_save' ] );
 
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );

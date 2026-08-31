@@ -18,6 +18,7 @@ final class Activator {
 	public static function activate(): void {
 		self::create_default_options();
 		self::register_capabilities();
+		self::register_cpt();
 		self::store_db_version();
 		flush_rewrite_rules();
 	}
@@ -48,13 +49,30 @@ final class Activator {
 	}
 
 	/**
-	 * Register the custom capability on the administrator role.
+	 * Register capabilities on the administrator role.
 	 */
 	private static function register_capabilities(): void {
 		$role = get_role( 'administrator' );
 		if ( $role ) {
 			$role->add_cap( Constants::CAP_MANAGE_SETTINGS );
 		}
+	}
+
+	/**
+	 * Register the hidden custom code CPT.
+	 */
+	private static function register_cpt(): void {
+		register_post_type( 'dac_custom_code', [
+			'labels'       => [
+				'name'          => 'DAC Custom Code',
+				'singular_name' => 'DAC Custom Code',
+			],
+			'public'       => false,
+			'show_ui'      => false,
+			'show_in_menu' => false,
+			'supports'     => [],
+			'map_meta_cap' => true,
+		] );
 	}
 
 	/**

@@ -110,6 +110,32 @@ final class SettingsPage {
 			},
 		];
 
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\CustomCodeTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\CustomCodeTab::label(),
+			'callback' => function () {
+				$injector = new \DashboardAccessControl\CustomCode\CodeInjector(
+					new \DashboardAccessControl\RoleAccess\RoleResolver(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
+						new \DashboardAccessControl\RoleAccess\ConflictResolver( $this->options )
+					),
+					$this->options
+				);
+				$tab = new \DashboardAccessControl\Admin\Tabs\CustomCodeTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
+					$injector
+				);
+				$tab->render();
+			},
+		];
+
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\ToolsTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\ToolsTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\ToolsTab( $this->options );
+				$tab->render();
+			},
+		];
+
 		$this->tabs['general'] = [
 			'label'    => __( 'General', 'dashboard-access-control' ),
 			'callback' => [ $this, 'render_general_tab' ],
