@@ -43,7 +43,6 @@ final class MenuControlTab {
 
 	/**
 	 * Capture the menu globals late on admin_menu.
-	 * Hook at priority 9999 so we see the final state after all plugins add their menus.
 	 */
 	public function capture_menu(): void {
 		global $menu, $submenu;
@@ -62,7 +61,6 @@ final class MenuControlTab {
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		// Role selector.
 		echo '<div class="dac-role-selector">';
 		echo '<label for="dac-menu-role"><strong>' . esc_html__( 'Select Role:', 'dashboard-access-control' ) . '</strong></label> ';
 		echo '<select id="dac-menu-role" name="role">';
@@ -91,20 +89,57 @@ final class MenuControlTab {
 	}
 
 	/**
-	 * Render the menu item list with checkboxes for a role.
+	 * Flatten the menu hierarchy into a renderable array (no recursion).
+	 *
+	 * @return array<int, array{slug: string, label: string, depth: int}>
+	 */
+	private function flatten_menu(): array {
+		$flat = [];
+
+		if ( empty( self::$captured_menu ) ) {
+			return $flat;
+		}
+
+		foreach ( self::$captured_menu as $menu_item ) {
+			$slug  = $menu_item[2] ?? '';
+			$label = $menu_item[3] ?? '';
+			if ( '' === $slug ) {
+				continue;
+			}
+
+			$flat[] = [
+				'slug'  => $slug,
+				'label' => $label,
+				'depth' => 0,
+			];
+
+			// Add submenus for this parent.
+			if ( isset( self::$captured_submenu[ $slug ] ) ) {
+				foreach ( self::$captured_submenu[ $slug ] as $sub ) {
+					$sub_slug  = $sub[2] ?? '';
+					$sub_label = $sub[0] ?? '';
+					if ( '' === $sub_slug ) {
+						continue;
+					}
+					$flat[] = [
+						'slug'  => $sub_slug,
+						'label' => $sub_label,
+						'depth' => 1,
+					];
+				}
+			}
+		}
+
+		return $flat;
+	}
+
+	/**
+	 * Render the menu item list with radio buttons for a role.
 	 *
 	 * @param string $role_slug Role slug.
 	 */
 	private function render_menu_list( string $role_slug ): void {
-		$profile = $this->repository->get( $role_slug );
-		$menus   = $profile[ Constants::PROFILE_MENUS ] ?? [];
-		$hidden  = [];
-		foreach ( $menus as $menu ) {
-			if ( ! empty( $menu['hidden'] ) ) {
-				$hidden[] = $menu['slug'] ?? '';
-			}
-		}
-
+		$hidden = $this->get_hidden_slugs( $role_slug );
 		$role_name = wp_roles()->roles[ $role_slug ]['name'] ?? $role_slug;
 
 		echo '<form method="post">';
@@ -123,14 +158,36 @@ final class MenuControlTab {
 		echo '</tr></thead>';
 		echo '<tbody>';
 
-		if ( empty( self::$captured_menu ) ) {
+		$flat = $this->flatten_menu();
+
+		if ( empty( $flat ) ) {
 			echo '<tr><td colspan="4">' . esc_html__( 'No menu items captured. Visit any admin page first.', 'dashboard-access-control' ) . '</td></tr>';
 		} else {
-			foreach ( self::$captured_menu as $menu_item ) {
-				$slug   = $menu_item[2] ?? '';
-				$label  = $menu_item[3] ?? '';
-				$hidden_status = in_array( $slug, $hidden, true );
-				$this->render_menu_row( $slug, $label, $hidden_status, $role_slug, 0 );
+			foreach ( $flat as $item ) {
+				$is_hidden = in_array( $item['slug'], $hidden, true );
+				$indent    = str_repeat( '&mdash; ', $item['depth'] );
+
+				echo '<tr>';
+				printf(
+					'<td><input type="radio" name="dac_menus[%s][hidden]" value="0" %s></td>',
+					esc_attr( $item['slug'] ),
+					checked( $is_hidden, false, false )
+				);
+				printf(
+					'<td><input type="radio" name="dac_menus[%s][hidden]" value="1" %s></td>',
+					esc_attr( $item['slug'] ),
+					checked( $is_hidden, true, false )
+				);
+				printf(
+					'<td>%s%s</td>',
+					$indent,
+					esc_html( $item['label'] )
+				);
+				printf(
+					'<td><code>%s</code></td>',
+					esc_html( $item['slug'] )
+				);
+				echo '</tr>';
 			}
 		}
 
@@ -141,44 +198,7 @@ final class MenuControlTab {
 	}
 
 	/**
-	 * Render a single menu row.
-	 */
-	private function render_menu_row( string $slug, string $label, bool $is_hidden, string $role_slug, int $depth ): void {
-		$indent = str_repeat( '&mdash; ', $depth );
-		printf(
-			'<tr><td><input type="radio" name="dac_menus[%s][hidden]" value="0" %s></td>',
-			esc_attr( $slug ),
-			checked( $is_hidden, false, false )
-		);
-		printf(
-			'<td><input type="radio" name="dac_menus[%s][hidden]" value="1" %s></td>',
-			esc_attr( $slug ),
-			checked( $is_hidden, true, false )
-		);
-		printf(
-			'<td>%s%s</td>',
-			$indent,
-			esc_html( $label )
-		);
-		printf(
-			'<td><code>%s</code></td>',
-			esc_html( $slug )
-		);
-		echo '</tr>';
-
-		// Render submenus.
-		if ( isset( self::$captured_submenu[ $slug ] ) ) {
-			foreach ( self::$captured_submenu[ $slug ] as $sub ) {
-				$sub_slug  = $sub[2] ?? '';
-				$sub_label = $sub[0] ?? '';
-				$sub_hidden = in_array( $sub_slug, $this->get_hidden_slugs( $role_slug ), true );
-				$this->render_menu_row( $sub_slug, $sub_label, $sub_hidden, $role_slug, $depth + 1 );
-			}
-		}
-	}
-
-	/**
-	 * Get all hidden slugs for a role.
+	 * Get all hidden slugs for a role (cached per call).
 	 *
 	 * @return string[]
 	 */
@@ -225,7 +245,7 @@ final class MenuControlTab {
 
 		$menus = [];
 		foreach ( $raw_menus as $slug => $data ) {
-			$slug  = sanitize_text_field( wp_unslash( $slug ) );
+			$slug   = sanitize_text_field( wp_unslash( $slug ) );
 			$hidden = ( '1' === ( $data['hidden'] ?? '0' ) );
 			$menus[] = [
 				'slug'   => $slug,
@@ -238,7 +258,6 @@ final class MenuControlTab {
 		$profile = $this->repository->get( $role_slug );
 		$profile[ Constants::PROFILE_MENUS ] = $menus;
 
-		// ExclusionGuard check.
 		$guard  = new \DashboardAccessControl\RoleAccess\ExclusionGuard( $this->repository, new \DashboardAccessControl\Support\Options() );
 		$result = $guard->check( $role_slug, $profile );
 		if ( is_wp_error( $result ) ) {
