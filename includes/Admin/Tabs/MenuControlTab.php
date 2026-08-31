@@ -109,7 +109,7 @@ final class MenuControlTab {
 
 		foreach ( self::$captured_menu as $menu_item ) {
 			$slug  = $menu_item[2] ?? '';
-			$label = $menu_item[3] ?? '';
+			$label = wp_strip_all_tags( $menu_item[0] ?? '' );
 			if ( '' === $slug ) {
 				continue;
 			}
@@ -118,7 +118,7 @@ final class MenuControlTab {
 			if ( isset( self::$captured_submenu[ $slug ] ) ) {
 				foreach ( self::$captured_submenu[ $slug ] as $sub ) {
 					$sub_slug  = $sub[2] ?? '';
-					$sub_label = $sub[0] ?? '';
+					$sub_label = wp_strip_all_tags( $sub[0] ?? '' );
 					if ( '' !== $sub_slug ) {
 						$children[] = [
 							'slug'  => $sub_slug,
