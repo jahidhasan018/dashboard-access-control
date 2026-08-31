@@ -392,15 +392,28 @@ final class MenuControlTab {
 			$raw_menus = [];
 		}
 
-		$menus = [];
+		// Build hidden lookup from submitted form data.
+		$hidden_slugs = [];
 		foreach ( $raw_menus as $slug => $data ) {
-			$slug   = sanitize_text_field( wp_unslash( $slug ) );
-			$hidden = ( '1' === ( $data['hidden'] ?? '0' ) );
+			if ( '1' === ( $data['hidden'] ?? '0' ) ) {
+				$hidden_slugs[] = sanitize_text_field( wp_unslash( $slug ) );
+			}
+		}
+
+		// Rebuild menus from ALL captured menus, not just submitted ones.
+		$menus = [];
+		foreach ( self::$captured_menu as $menu_item ) {
+			$slug  = $menu_item[2] ?? '';
+			$label = wp_strip_all_tags( $menu_item[0] ?? '' );
+			if ( '' === $slug || str_starts_with( $slug, 'separator' ) ) {
+				continue;
+			}
+
 			$menus[] = [
 				'slug'   => $slug,
-				'hidden' => $hidden,
-				'label'  => '',
-				'icon'   => '',
+				'hidden' => in_array( $slug, $hidden_slugs, true ),
+				'label'  => $label,
+				'icon'   => $menu_item[6] ?? '',
 			];
 		}
 
