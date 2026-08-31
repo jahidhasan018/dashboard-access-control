@@ -7,6 +7,8 @@ use DashboardAccessControl\Admin\SettingsPage;
 use DashboardAccessControl\Admin\Assets;
 use DashboardAccessControl\Admin\Tabs\RoleManagerTab;
 use DashboardAccessControl\Admin\Tabs\MenuControlTab;
+use DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab;
+use DashboardAccessControl\Admin\Tabs\AdminBarTab;
 use DashboardAccessControl\RoleAccess\RoleProfileRepository;
 use DashboardAccessControl\RoleAccess\RoleResolver;
 use DashboardAccessControl\RoleAccess\ConflictResolver;
@@ -14,6 +16,8 @@ use DashboardAccessControl\RoleAccess\ExclusionGuard;
 use DashboardAccessControl\Enforcement\MenuEnforcer;
 use DashboardAccessControl\Enforcement\CapabilityEnforcer;
 use DashboardAccessControl\Enforcement\RouteGuard;
+use DashboardAccessControl\Enforcement\DashboardWidgetEnforcer;
+use DashboardAccessControl\Enforcement\AdminBarEnforcer;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -101,6 +105,20 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			DashboardWidgetsTab::class,
+			function ( Container $c ): DashboardWidgetsTab {
+				return new DashboardWidgetsTab( $c->get( RoleProfileRepository::class ) );
+			}
+		);
+
+		$this->container->set(
+			AdminBarTab::class,
+			function ( Container $c ): AdminBarTab {
+				return new AdminBarTab( $c->get( RoleProfileRepository::class ) );
+			}
+		);
+
+		$this->container->set(
 			MenuEnforcer::class,
 			function ( Container $c ): MenuEnforcer {
 				return new MenuEnforcer( $c->get( RoleResolver::class ) );
@@ -118,6 +136,20 @@ final class Plugin {
 			RouteGuard::class,
 			function ( Container $c ): RouteGuard {
 				return new RouteGuard( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
+			DashboardWidgetEnforcer::class,
+			function ( Container $c ): DashboardWidgetEnforcer {
+				return new DashboardWidgetEnforcer( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
+			AdminBarEnforcer::class,
+			function ( Container $c ): AdminBarEnforcer {
+				return new AdminBarEnforcer( $c->get( RoleResolver::class ) );
 			}
 		);
 
@@ -142,7 +174,7 @@ final class Plugin {
 	private function boot(): void {
 		Activator::maybe_migrate();
 
-		// Settings page (handles its own tabs via filter).
+		// Settings page.
 		$settings_page = $this->container->get( SettingsPage::class );
 		$settings_page->init();
 
@@ -160,6 +192,15 @@ final class Plugin {
 		add_action( 'admin_init', [ $role_tab, 'handle_save' ] );
 		add_action( 'admin_init', [ $role_tab, 'handle_reset' ] );
 
+		// Dashboard widgets tab: capture widgets + handle saves.
+		$widgets_tab = $this->container->get( DashboardWidgetsTab::class );
+		add_action( 'wp_dashboard_setup', [ $widgets_tab, 'capture_widgets' ], 9999 );
+		add_action( 'admin_init', [ $widgets_tab, 'handle_save' ] );
+
+		// Admin bar tab: handle saves.
+		$admin_bar_tab = $this->container->get( AdminBarTab::class );
+		add_action( 'admin_init', [ $admin_bar_tab, 'handle_save' ] );
+
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );
 		$menu_enforcer->init();
@@ -169,6 +210,12 @@ final class Plugin {
 
 		$route_guard = $this->container->get( RouteGuard::class );
 		$route_guard->init();
+
+		$widget_enforcer = $this->container->get( DashboardWidgetEnforcer::class );
+		$widget_enforcer->init();
+
+		$admin_bar_enforcer = $this->container->get( AdminBarEnforcer::class );
+		$admin_bar_enforcer->init();
 	}
 
 	/**

@@ -52,9 +52,8 @@ final class SettingsPage {
 	private function register_tabs(): void {
 		$this->tabs = [];
 
-		// Core tabs registered here.
-		$this->tabs[ RoleManagerTab::id() ] = [
-			'label'    => RoleManagerTab::label(),
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\RoleManagerTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\RoleManagerTab::label(),
 			'callback' => function () {
 				$tab = new \DashboardAccessControl\Admin\Tabs\RoleManagerTab(
 					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
@@ -63,10 +62,30 @@ final class SettingsPage {
 			},
 		];
 
-		$this->tabs[ MenuControlTab::id() ] = [
-			'label'    => MenuControlTab::label(),
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\MenuControlTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\MenuControlTab::label(),
 			'callback' => function () {
 				$tab = new \DashboardAccessControl\Admin\Tabs\MenuControlTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
+				$tab->render();
+			},
+		];
+
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
+				$tab->render();
+			},
+		];
+
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\AdminBarTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\AdminBarTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\AdminBarTab(
 					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
 				);
 				$tab->render();
@@ -94,7 +113,6 @@ final class SettingsPage {
 			return;
 		}
 
-		// Render admin notices before the page content.
 		Notices::render_all();
 
 		$active_tab = $this->get_active_tab();

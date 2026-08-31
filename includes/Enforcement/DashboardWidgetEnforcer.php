@@ -1,0 +1,88 @@
+<?php
+declare(strict_types=1);
+
+namespace DashboardAccessControl\Enforcement;
+
+use DashboardAccessControl\Core\Constants;
+use DashboardAccessControl\RoleAccess\RoleResolver;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Dashboard widget enforcer — Layer 1.
+ * Removes widgets from the dashboard based on role profile.
+ */
+final class DashboardWidgetEnforcer {
+
+	private RoleResolver $resolver;
+
+	public function __construct( RoleResolver $resolver ) {
+		$this->resolver = $resolver;
+	}
+
+	/**
+	 * Hook into wp_dashboard_setup at late priority.
+	 */
+	public function init(): void {
+		add_action( 'wp_dashboard_setup', [ $this, 'enforce' ], 999 );
+	}
+
+	/**
+	 * Remove dashboard widgets based on the current user's resolved profile.
+	 */
+	public function enforce(): void {
+		$user = wp_get_current_user();
+		if ( ! $user || ! $user->exists() ) {
+			return;
+		}
+
+		if ( $this->is_excluded( $user ) ) {
+			return;
+		}
+
+		$profile = $this->resolver->resolve( $user );
+		$widgets = $profile[ Constants::PROFILE_WIDGETS ] ?? [];
+
+		if ( empty( $widgets ) ) {
+			return;
+		}
+
+		global $wp_meta_boxes;
+
+		foreach ( $widgets as $widget_id => $hidden ) {
+			if ( ! $hidden ) {
+				continue;
+			}
+
+			// Remove from dashboard meta boxes.
+			if ( isset( $wp_meta_boxes['dashboard']['normal']['default'][ $widget_id ] ) ) {
+				unset( $wp_meta_boxes['dashboard']['normal']['default'][ $widget_id ] );
+			}
+
+			// Also try side column.
+			if ( isset( $wp_meta_boxes['dashboard']['side']['default'][ $widget_id ] ) ) {
+				unset( $wp_meta_boxes['dashboard']['side']['default'][ $widget_id ] );
+			}
+
+			// Remove the postmeta box too if it exists.
+			remove_meta_box( $widget_id, 'dashboard', 'normal' );
+			remove_meta_box( $widget_id, 'dashboard', 'side' );
+		}
+	}
+
+	/**
+	 * Check if a user is excluded from enforcement.
+	 */
+	private function is_excluded( \WP_User $user ): bool {
+		$general  = get_option( Constants::OPT_GENERAL, [] );
+		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
+
+		if ( $excluded && in_array( 'administrator', $user->roles, true ) ) {
+			return true;
+		}
+
+		return (bool) apply_filters( 'dac_is_user_excluded', $excluded, $user );
+	}
+}
