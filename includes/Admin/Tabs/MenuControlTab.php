@@ -400,24 +400,45 @@ final class MenuControlTab {
 			}
 		}
 
-		// Rebuild menus from ALL captured menus, not just submitted ones.
-		$menus = [];
-		foreach ( self::$captured_menu as $menu_item ) {
-			$slug  = $menu_item[2] ?? '';
-			$label = wp_strip_all_tags( $menu_item[0] ?? '' );
-			if ( '' === $slug || str_starts_with( $slug, 'separator' ) ) {
-				continue;
-			}
+		// Load existing profile to preserve labels, icons, and previously saved menus.
+		$profile = $this->repository->get( $role_slug );
+		$existing_menus = $profile[ Constants::PROFILE_MENUS ] ?? [];
 
+		// Build a lookup of existing menus by slug.
+		$existing_by_slug = [];
+		foreach ( $existing_menus as $item ) {
+			$slug = $item['slug'] ?? '';
+			if ( '' !== $slug ) {
+				$existing_by_slug[ $slug ] = $item;
+			}
+		}
+
+		// Rebuild menus: update hidden status for submitted slugs, preserve others.
+		$menus = [];
+		$processed_slugs = [];
+		foreach ( $existing_menus as $item ) {
+			$slug = $item['slug'] ?? '';
 			$menus[] = [
 				'slug'   => $slug,
 				'hidden' => in_array( $slug, $hidden_slugs, true ),
-				'label'  => $label,
-				'icon'   => $menu_item[6] ?? '',
+				'label'  => $item['label'] ?? '',
+				'icon'   => $item['icon'] ?? '',
 			];
+			$processed_slugs[] = $slug;
 		}
 
-		$profile = $this->repository->get( $role_slug );
+		// Add any newly hidden menus not already in the profile.
+		foreach ( $hidden_slugs as $slug ) {
+			if ( ! in_array( $slug, $processed_slugs, true ) ) {
+				$menus[] = [
+					'slug'   => $slug,
+					'hidden' => true,
+					'label'  => '',
+					'icon'   => '',
+				];
+			}
+		}
+
 		$profile[ Constants::PROFILE_MENUS ] = $menus;
 
 		$guard  = new \DashboardAccessControl\RoleAccess\ExclusionGuard( $this->repository, new \DashboardAccessControl\Support\Options() );
