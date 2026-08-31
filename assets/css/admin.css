@@ -1,23 +1,588 @@
-/* Dashboard Access Control — Admin Styles */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dashboard Access Control — Modern Admin Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+	--dac-primary: #2271b1;
+	--dac-primary-hover: #135e96;
+	--dac-success: #00a32a;
+	--dac-success-bg: #edfaef;
+	--dac-danger: #d63638;
+	--dac-danger-bg: #fceeee;
+	--dac-warning: #dba617;
+	--dac-bg: #f0f0f1;
+	--dac-card-bg: #fff;
+	--dac-border: #c3c4c7;
+	--dac-border-light: #e0e0e0;
+	--dac-text: #1d2327;
+	--dac-text-muted: #646970;
+	--dac-radius: 8px;
+	--dac-shadow: 0 1px 3px rgba(0,0,0,0.08);
+	--dac-shadow-hover: 0 2px 8px rgba(0,0,0,0.12);
+	--dac-transition: 0.2s ease;
+}
+
+/* ── General ─────────────────────────────────────────────────────────────── */
 
 .dac-tab-content {
 	margin-top: 20px;
 }
 
-.dac-role-selector {
+.dac-subtitle {
+	color: var(--dac-text-muted);
 	margin-bottom: 20px;
-	padding: 15px;
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+
+.dac-card {
+	background: var(--dac-card-bg);
+	border: 1px solid var(--dac-border-light);
+	border-radius: var(--dac-radius);
+	box-shadow: var(--dac-shadow);
+	margin-bottom: 20px;
+	overflow: hidden;
+}
+
+.dac-card-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 20px;
+	background: var(--dac-bg);
+	border-bottom: 1px solid var(--dac-border-light);
+	font-size: 14px;
+}
+
+.dac-card-body {
+	padding: 20px;
+}
+
+/* ── Role Selector ───────────────────────────────────────────────────────── */
+
+.dac-role-picker {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.dac-select {
+	min-width: 280px;
+	height: 38px;
+	font-size: 14px;
+	border-radius: 6px;
+	border: 1px solid var(--dac-border);
+	padding: 0 12px;
 	background: #fff;
-	border: 1px solid #ccd0d4;
-	border-radius: 4px;
+	transition: border-color var(--dac-transition);
 }
 
-.dac-role-selector label {
-	margin-right: 10px;
+.dac-select:focus {
+	border-color: var(--dac-primary);
+	box-shadow: 0 0 0 1px var(--dac-primary);
+	outline: none;
 }
 
-.dac-role-selector select {
-	min-width: 250px;
+.dac-btn-load {
+	height: 38px;
+	padding: 0 20px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 6px;
+	transition: all var(--dac-transition);
+}
+
+/* ── Toolbar ─────────────────────────────────────────────────────────────── */
+
+.dac-menu-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 12px 20px !important;
+	background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+}
+
+.dac-toolbar-left {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.dac-toolbar-right {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.dac-role-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	background: var(--dac-primary);
+	color: #fff;
+	border-radius: 20px;
+	font-size: 13px;
+	line-height: 1;
+}
+
+.dac-role-badge strong {
+	font-weight: 700;
+}
+
+.dac-btn-sm {
+	padding: 4px 12px !important;
+	font-size: 12px !important;
+	border-radius: 4px !important;
+	height: 30px !important;
+	line-height: 1.4 !important;
+	transition: all var(--dac-transition) !important;
+}
+
+.dac-btn-danger {
+	color: var(--dac-danger) !important;
+	border-color: var(--dac-danger) !important;
+}
+
+.dac-btn-danger:hover {
+	background: var(--dac-danger) !important;
+	color: #fff !important;
+}
+
+.dac-btn-success {
+	color: var(--dac-success) !important;
+	border-color: var(--dac-success) !important;
+}
+
+.dac-btn-success:hover {
+	background: var(--dac-success) !important;
+	color: #fff !important;
+}
+
+/* ── Search Box ──────────────────────────────────────────────────────────── */
+
+.dac-search-box {
+	position: relative;
+}
+
+.dac-search-input {
+	width: 220px;
+	height: 32px;
+	padding: 0 12px 0 34px;
+	border: 1px solid var(--dac-border);
+	border-radius: 6px;
+	font-size: 13px;
+	background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23646970' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.868-3.834zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") no-repeat 10px center;
+	transition: all var(--dac-transition);
+}
+
+.dac-search-input:focus {
+	border-color: var(--dac-primary);
+	box-shadow: 0 0 0 1px var(--dac-primary);
+	outline: none;
+	width: 280px;
+}
+
+/* ── Menu Accordion ──────────────────────────────────────────────────────── */
+
+.dac-menu-accordion {
+	border: 1px solid var(--dac-border-light);
+	border-radius: var(--dac-radius);
+	overflow: hidden;
+}
+
+.dac-accordion-item {
+	border-bottom: 1px solid var(--dac-border-light);
+	transition: background var(--dac-transition);
+}
+
+.dac-accordion-item:last-child {
+	border-bottom: none;
+}
+
+.dac-accordion-item:hover {
+	background: #f8f9fa;
+}
+
+.dac-accordion-item.dac-item-hidden {
+	background: #fef7f7;
+}
+
+.dac-accordion-item.dac-item-hidden:hover {
+	background: #fceeee;
+}
+
+.dac-accordion-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	cursor: pointer;
+	user-select: none;
+	transition: background var(--dac-transition);
+}
+
+.dac-accordion-header:hover {
+	background: rgba(0,0,0,0.02);
+}
+
+.dac-accordion-left {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex: 1;
+	min-width: 0;
+}
+
+.dac-accordion-arrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	font-size: 10px;
+	color: var(--dac-text-muted);
+	transition: transform 0.25s ease;
+	flex-shrink: 0;
+}
+
+.dac-accordion-item.dac-open .dac-accordion-arrow {
+	transform: rotate(90deg);
+}
+
+.dac-accordion-spacer {
+	display: inline-block;
+	width: 20px;
+	flex-shrink: 0;
+}
+
+.dac-item-label {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--dac-text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.dac-child-count {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 8px;
+	background: var(--dac-bg);
+	border-radius: 10px;
+	font-size: 11px;
+	color: var(--dac-text-muted);
+	font-weight: 500;
+	flex-shrink: 0;
+}
+
+.dac-accordion-right {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+}
+
+/* ── Children ────────────────────────────────────────────────────────────── */
+
+.dac-accordion-children {
+	display: none;
+	border-top: 1px solid var(--dac-border-light);
+	background: rgba(0,0,0,0.01);
+}
+
+.dac-accordion-item.dac-open > .dac-accordion-children {
+	display: block;
+}
+
+.dac-child-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 16px 10px 46px;
+	border-bottom: 1px solid rgba(0,0,0,0.04);
+	transition: background var(--dac-transition);
+}
+
+.dac-child-item:last-child {
+	border-bottom: none;
+}
+
+.dac-child-item:hover {
+	background: rgba(0,0,0,0.02);
+}
+
+.dac-child-item.dac-item-hidden {
+	background: #fef7f7;
+}
+
+.dac-child-item.dac-item-hidden:hover {
+	background: #fceeee;
+}
+
+.dac-child-left {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex: 1;
+	min-width: 0;
+}
+
+.dac-child-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--dac-border);
+	flex-shrink: 0;
+}
+
+.dac-child-right {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-shrink: 0;
+}
+
+/* ── Toggle Switch ───────────────────────────────────────────────────────── */
+
+.dac-toggle {
+	position: relative;
+	display: inline-block;
+	width: 44px;
+	height: 24px;
+	cursor: pointer;
+}
+
+.dac-toggle-sm {
+	width: 36px;
+	height: 20px;
+}
+
+.dac-toggle-input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+	position: absolute;
+}
+
+.dac-toggle-slider {
+	position: absolute;
+	inset: 0;
+	background: var(--dac-border);
+	border-radius: 24px;
+	transition: all var(--dac-transition);
+}
+
+.dac-toggle-slider::before {
+	content: '';
+	position: absolute;
+	width: 18px;
+	height: 18px;
+	left: 3px;
+	bottom: 3px;
+	background: #fff;
+	border-radius: 50%;
+	transition: all var(--dac-transition);
+	box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dac-toggle-sm .dac-toggle-slider::before {
+	width: 14px;
+	height: 14px;
+}
+
+.dac-toggle-input:checked + .dac-toggle-slider {
+	background: var(--dac-danger);
+}
+
+.dac-toggle-input:checked + .dac-toggle-slider::before {
+	transform: translateX(20px);
+}
+
+.dac-toggle-sm .dac-toggle-input:checked + .dac-toggle-slider::before {
+	transform: translateX(16px);
+}
+
+.dac-toggle-input:not(:checked) + .dac-toggle-slider {
+	background: var(--dac-success);
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+
+.dac-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 10px;
+	border-radius: 12px;
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.dac-badge-visible {
+	background: var(--dac-success-bg);
+	color: var(--dac-success);
+}
+
+.dac-badge-hidden {
+	background: var(--dac-danger-bg);
+	color: var(--dac-danger);
+}
+
+/* ── Stats Bar ───────────────────────────────────────────────────────────── */
+
+.dac-stats-bar {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	padding: 14px 20px;
+	margin-top: 16px;
+	background: var(--dac-card-bg);
+	border: 1px solid var(--dac-border-light);
+	border-radius: var(--dac-radius);
+}
+
+.dac-stat {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: var(--dac-text-muted);
+}
+
+.dac-stat-num {
+	font-weight: 700;
+	font-size: 16px;
+}
+
+.dac-stat-shown .dac-stat-num {
+	color: var(--dac-success);
+}
+
+.dac-stat-hidden .dac-stat-num {
+	color: var(--dac-danger);
+}
+
+.dac-stat-total .dac-stat-num {
+	color: var(--dac-primary);
+}
+
+/* ── Submit Row ──────────────────────────────────────────────────────────── */
+
+.dac-submit-row {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: 1px solid var(--dac-border-light);
+}
+
+.dac-submit-row .button-primary {
+	height: 40px;
+	padding: 0 24px;
+	font-size: 14px;
+	font-weight: 600;
+	border-radius: 6px;
+}
+
+/* ── Empty State ─────────────────────────────────────────────────────────── */
+
+.dac-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 20px;
+	text-align: center;
+	color: var(--dac-text-muted);
+}
+
+.dac-empty-state p {
+	margin: 12px 0 0;
+	font-size: 14px;
+}
+
+/* ── Icons ───────────────────────────────────────────────────────────────── */
+
+.dac-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+}
+
+.dac-icon-users::before {
+	content: '\f147';
+	font-family: dashicons;
+	font-size: 20px;
+	color: var(--dac-primary);
+}
+
+.dac-icon-warning::before {
+	content: '\f534';
+	font-family: dashicons;
+	font-size: 36px;
+	color: var(--dac-warning);
+}
+
+/* ── Search highlight ────────────────────────────────────────────────────── */
+
+.dac-search-hidden {
+	display: none !important;
+}
+
+.dac-highlight {
+	background: #fff3b0;
+	padding: 0 2px;
+	border-radius: 2px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 782px) {
+	.dac-menu-toolbar {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.dac-toolbar-right {
+		width: 100%;
+	}
+
+	.dac-search-input,
+	.dac-search-input:focus {
+		width: 100%;
+	}
+
+	.dac-stats-bar {
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+
+	.dac-child-item {
+		padding-left: 30px;
+	}
+}
+
+/* ── Role Manager & Widgets (shared) ─────────────────────────────────────── */
+
+.dac-role-manager h2,
+.dac-menu-control h2,
+.dac-widgets-control h2,
+.dac-admin-bar h2 {
+	margin-top: 0;
+	padding-bottom: 0;
+}
+
+.dac-role-manager .form-table th {
+	width: 200px;
 }
 
 .dac-menu-table th,
@@ -31,14 +596,8 @@
 
 .dac-menu-table code {
 	font-size: 12px;
-	color: #666;
-}
-
-.dac-role-manager h2,
-.dac-menu-control h2 {
-	margin-top: 10px;
-}
-
-.dac-role-manager .form-table th {
-	width: 200px;
+	color: var(--dac-text-muted);
+	background: var(--dac-bg);
+	padding: 2px 6px;
+	border-radius: 3px;
 }
