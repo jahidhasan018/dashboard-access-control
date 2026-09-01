@@ -82,6 +82,15 @@ final class DashboardCustomizationTab {
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
+		// Persist selected role: use GET param if set, otherwise load from storage.
+		$options = $this->repository->get_options();
+		if ( '' !== $selected && isset( $roles[ $selected ] ) ) {
+			$options->set_selected_role( self::id(), $selected );
+		} else {
+			$selected = $options->get_selected_role( self::id() );
+		}
+
+		// Default to first role if nothing stored yet.
 		if ( '' === $selected || ! isset( $roles[ $selected ] ) ) {
 			$selected = array_key_first( $roles );
 		}

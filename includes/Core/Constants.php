@@ -18,6 +18,7 @@ final class Constants {
 	public const OPT_GENERAL         = 'dac_general_settings';
 	public const OPT_DB_VERSION      = 'dac_db_version';
 	public const OPT_LAST_BACKUP     = 'dac_last_backup';
+	public const OPT_SELECTED_ROLES  = 'dac_selected_roles';
 
 	// ── Capabilities ───────────────────────────────────────────────────────
 	public const CAP_MANAGE_SETTINGS = 'dac_manage_settings';

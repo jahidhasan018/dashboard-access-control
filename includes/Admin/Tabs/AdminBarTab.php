@@ -71,10 +71,25 @@ final class AdminBarTab {
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		// Role selector card wrapped in native GET form.
-		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '">';
-		echo '<input type="hidden" name="page" value="' . esc_attr( Constants::MENU_SLUG ) . '">';
-		echo '<input type="hidden" name="tab" value="' . esc_attr( self::id() ) . '">';
+		// Persist selected role: use GET param if set, otherwise load from storage.
+		$options = $this->repository->get_options();
+		if ( '' !== $selected && isset( $roles[ $selected ] ) ) {
+			$options->set_selected_role( self::id(), $selected );
+		} else {
+			$selected = $options->get_selected_role( self::id() );
+		}
+
+		// Build list of roles that have admin bar settings applied.
+		$all_profiles  = $this->repository->get_all();
+		$applied_roles = [];
+		foreach ( $all_profiles as $slug => $profile ) {
+			$bar = $profile[ Constants::PROFILE_ADMIN_BAR ] ?? [];
+			if ( ! empty( $bar ) ) {
+				$applied_roles[] = $slug;
+			}
+		}
+
+		// Role selector card.
 		echo '<div class="dac-card dac-role-selector">';
 		echo '<div class="dac-card-header">';
 		echo '<span class="dac-icon dac-icon-users"></span>';
@@ -82,27 +97,28 @@ final class AdminBarTab {
 		echo '</div>';
 		echo '<div class="dac-card-body">';
 		echo '<div class="dac-role-picker">';
-		echo '<select id="dac-bar-role" name="role" class="dac-select">';
+		printf(
+			'<select id="dac-bar-role" class="dac-select" onchange="if(this.value)window.location.href=\'%s\' + this.value">',
+			esc_url( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() . '&role=' ) )
+		);
 		echo '<option value="">' . esc_html__( '— Choose a Role —', 'dashboard-access-control' ) . '</option>';
 		foreach ( $roles as $slug => $role_data ) {
+			$has_settings = in_array( $slug, $applied_roles, true );
+			$checkmark    = $has_settings ? ' ✓' : '';
 			printf(
-				'<option value="%s" %s>%s</option>',
+				'<option value="%s" %s>%s%s</option>',
 				esc_attr( $slug ),
 				selected( $slug, $selected, false ),
-				esc_html( $role_data['name'] )
+				esc_html( $role_data['name'] ),
+				esc_html( $checkmark )
 			);
 		}
-		echo '</select> ';
-		printf(
-			'<button type="submit" class="button button-primary dac-btn-load" id="dac-load-bar-role">%s</button>',
-			esc_html__( 'Load Rules', 'dashboard-access-control' )
-		);
+		echo '</select>';
 		echo '</div>';
 		echo '</div>';
 		echo '</div>';
-		echo '</form>';
 
-		if ( $selected ) {
+		if ( $selected && isset( $roles[ $selected ] ) ) {
 			$this->render_bar_form( $selected );
 		}
 

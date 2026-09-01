@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace DashboardAccessControl\Support;
 
+use DashboardAccessControl\Core\Constants;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -67,5 +69,22 @@ final class Options {
 	 */
 	public function exists( string $key ): bool {
 		return false !== get_option( $key );
+	}
+
+	/**
+	 * Get the last selected role for a specific tab.
+	 */
+	public function get_selected_role( string $tab ): string {
+		$selected = $this->get( Constants::OPT_SELECTED_ROLES, [] );
+		return $selected[ $tab ] ?? '';
+	}
+
+	/**
+	 * Save the selected role for a specific tab.
+	 */
+	public function set_selected_role( string $tab, string $role ): void {
+		$selected = $this->get( Constants::OPT_SELECTED_ROLES, [] );
+		$selected[ $tab ] = $role;
+		$this->update( Constants::OPT_SELECTED_ROLES, $selected );
 	}
 }
