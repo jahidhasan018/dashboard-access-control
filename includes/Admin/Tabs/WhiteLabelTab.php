@@ -51,100 +51,6 @@ final class WhiteLabelTab {
 
 		echo '<table class="form-table">';
 
-		// ── Admin Logo ──────────────────────────────────────────────────────
-		echo '<tr><th scope="row">' . esc_html__( 'Admin Logo (Toolbar)', 'dashboard-access-control' ) . '</th><td>';
-		$admin_logo_id = $settings['admin_logo_id'] ?? 0;
-		if ( $admin_logo_id ) {
-			$logo_url = wp_get_attachment_image_url( $admin_logo_id, [ 32, 32 ] );
-			if ( $logo_url ) {
-				printf( '<p><img src="%s" alt="%s" style="max-width:32px;height:auto;" /></p>', esc_url( $logo_url ), esc_attr__( 'Current Logo', 'dashboard-access-control' ) );
-			}
-		}
-		printf(
-			'<input type="hidden" name="dac_wl[admin_logo_id]" value="%d" />',
-			$admin_logo_id
-		);
-		echo '<label>' . esc_html__( 'Upload Logo Image (16x16 or 32x32 recommended)', 'dashboard-access-control' ) . '</label><br/>';
-		echo '<input type="file" name="dac_wl_admin_logo" accept="image/*" />';
-		if ( $admin_logo_id ) {
-			printf(
-				' <label><input type="checkbox" name="dac_wl[remove_admin_logo]" value="1"> %s</label>',
-				esc_html__( 'Remove logo', 'dashboard-access-control' )
-			);
-		}
-		echo '</td></tr>';
-
-		// ── Login Logo ──────────────────────────────────────────────────────
-		echo '<tr><th scope="row">' . esc_html__( 'Login Logo', 'dashboard-access-control' ) . '</th><td>';
-		$login_logo_id = $settings['login_logo_id'] ?? 0;
-		if ( $login_logo_id ) {
-			$logo_url = wp_get_attachment_image_url( $login_logo_id, 'medium' );
-			if ( $logo_url ) {
-				printf( '<p><img src="%s" alt="%s" style="max-width:300px;height:auto;" /></p>', esc_url( $logo_url ), esc_attr__( 'Current Login Logo', 'dashboard-access-control' ) );
-			}
-		}
-		printf(
-			'<input type="hidden" name="dac_wl[login_logo_id]" value="%d" />',
-			$login_logo_id
-		);
-		echo '<label>' . esc_html__( 'Upload Login Logo Image (recommended: 300x80px)', 'dashboard-access-control' ) . '</label><br/>';
-		echo '<input type="file" name="dac_wl_login_logo" accept="image/*" />';
-		if ( $login_logo_id ) {
-			printf(
-				' <label><input type="checkbox" name="dac_wl[remove_login_logo]" value="1"> %s</label>',
-				esc_html__( 'Remove logo', 'dashboard-access-control' )
-			);
-		}
-		echo '</td></tr>';
-
-		// ── Login Logo URL ──────────────────────────────────────────────────
-		echo '<tr><th scope="row">' . esc_html__( 'Login Logo Link URL', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="url" name="dac_wl[login_logo_url]" value="%s" class="regular-text" placeholder="%s" />',
-			esc_attr( $settings['login_logo_url'] ?? '' ),
-			esc_attr__( 'https://example.com', 'dashboard-access-control' )
-		);
-		echo '<p class="description">' . esc_html__( 'URL the login logo links to. Leave empty for default.', 'dashboard-access-control' ) . '</p>';
-		echo '</td></tr>';
-
-		// ── Login Logo Title ────────────────────────────────────────────────
-		echo '<tr><th scope="row">' . esc_html__( 'Login Logo Title', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_wl[login_logo_title]" value="%s" class="regular-text" />',
-			esc_attr( $settings['login_logo_title'] ?? '' )
-		);
-		echo '<p class="description">' . esc_html__( 'Tooltip text when hovering over the login logo.', 'dashboard-access-control' ) . '</p>';
-		echo '</td></tr>';
-
-		// ── Login Background ────────────────────────────────────────────────
-		echo '<tr><th scope="row">' . esc_html__( 'Login Background Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_wl[login_bg_color]" value="%s" class="dac-color-picker" />',
-			esc_attr( $settings['login_bg_color'] ?? '' )
-		);
-		echo '</td></tr>';
-
-		echo '<tr><th scope="row">' . esc_html__( 'Login Background Image', 'dashboard-access-control' ) . '</th><td>';
-		$bg_id = $settings['login_bg_image_id'] ?? 0;
-		if ( $bg_id ) {
-			$bg_url = wp_get_attachment_image_url( $bg_id, 'medium' );
-			if ( $bg_url ) {
-				printf( '<p><img src="%s" alt="%s" style="max-width:300px;height:auto;" /></p>', esc_url( $bg_url ), esc_attr__( 'Current Background', 'dashboard-access-control' ) );
-			}
-		}
-		printf(
-			'<input type="hidden" name="dac_wl[login_bg_image_id]" value="%d" />',
-			$bg_id
-		);
-		echo '<input type="file" name="dac_wl_login_bg" accept="image/*" />';
-		if ( $bg_id ) {
-			printf(
-				' <label><input type="checkbox" name="dac_wl[remove_login_bg]" value="1"> %s</label>',
-				esc_html__( 'Remove background', 'dashboard-access-control' )
-			);
-		}
-		echo '</td></tr>';
-
 		// ── Admin Footer Text ───────────────────────────────────────────────
 		echo '<tr><th scope="row">' . esc_html__( 'Admin Footer Text', 'dashboard-access-control' ) . '</th><td>';
 		printf(
@@ -231,39 +137,6 @@ final class WhiteLabelTab {
 			wp_mkdir_p( $attach_dir );
 		}
 
-		// Admin logo upload.
-		if ( ! empty( $_FILES['dac_wl_admin_logo']['tmp_name'] ) ) {
-			$logo_id = $this->handle_image_upload( 'dac_wl_admin_logo', $attach_dir );
-			if ( $logo_id ) {
-				$settings['admin_logo_id'] = $logo_id;
-			}
-		}
-		if ( ! empty( $raw['remove_admin_logo'] ) ) {
-			unset( $settings['admin_logo_id'] );
-		}
-
-		// Login logo upload.
-		if ( ! empty( $_FILES['dac_wl_login_logo']['tmp_name'] ) ) {
-			$logo_id = $this->handle_image_upload( 'dac_wl_login_logo', $attach_dir );
-			if ( $logo_id ) {
-				$settings['login_logo_id'] = $logo_id;
-			}
-		}
-		if ( ! empty( $raw['remove_login_logo'] ) ) {
-			unset( $settings['login_logo_id'] );
-		}
-
-		// Login background upload.
-		if ( ! empty( $_FILES['dac_wl_login_bg']['tmp_name'] ) ) {
-			$bg_id = $this->handle_image_upload( 'dac_wl_login_bg', $attach_dir );
-			if ( $bg_id ) {
-				$settings['login_bg_image_id'] = $bg_id;
-			}
-		}
-		if ( ! empty( $raw['remove_login_bg'] ) ) {
-			unset( $settings['login_bg_image_id'] );
-		}
-
 		// Favicon upload.
 		if ( ! empty( $_FILES['dac_wl_favicon']['tmp_name'] ) ) {
 			$favicon_id = $this->handle_image_upload( 'dac_wl_favicon', $attach_dir );
@@ -276,7 +149,7 @@ final class WhiteLabelTab {
 		}
 
 		// Text fields.
-		$text_fields = [ 'login_logo_url', 'login_logo_title', 'login_bg_color', 'footer_text', 'howdy_text' ];
+		$text_fields = [ 'footer_text', 'howdy_text' ];
 		foreach ( $text_fields as $field ) {
 			if ( isset( $raw[ $field ] ) ) {
 				$settings[ $field ] = sanitize_text_field( wp_unslash( $raw[ $field ] ) );
