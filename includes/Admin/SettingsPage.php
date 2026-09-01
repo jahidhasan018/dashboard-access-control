@@ -149,8 +149,15 @@ final class SettingsPage {
 			},
 		];
 
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\AppearanceTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\AppearanceTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\AppearanceTab( $this->options );
+				$tab->render();
+			},
+		];
+
 		/**
-		 * Filter the settings tabs.
 		 *
 		 * @param array<string, array{label: string, callback: callable}> $tabs Registered tabs.
 		 */

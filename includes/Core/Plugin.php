@@ -28,6 +28,8 @@ use DashboardAccessControl\Enforcement\XmlRpcGuard;
 use DashboardAccessControl\CustomCode\CodeInjector;
 use DashboardAccessControl\Admin\Tabs\CustomCodeTab;
 use DashboardAccessControl\Admin\Tabs\ToolsTab;
+use DashboardAccessControl\Admin\Tabs\AppearanceTab;
+use DashboardAccessControl\Enforcement\AppearanceEnforcer;
 use DashboardAccessControl\Admin\Tabs\DashboardCustomizationTab;
 use DashboardAccessControl\Enforcement\DashboardCustomizationEnforcer;
 use DashboardAccessControl\Support\Options;
@@ -214,6 +216,20 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			AppearanceTab::class,
+			function ( Container $c ): AppearanceTab {
+				return new AppearanceTab( $c->get( Options::class ) );
+			}
+		);
+
+		$this->container->set(
+			AppearanceEnforcer::class,
+			function ( Container $c ): AppearanceEnforcer {
+				return new AppearanceEnforcer( $c->get( Options::class ) );
+			}
+		);
+
+		$this->container->set(
 			DashboardCustomizationEnforcer::class,
 			function ( Container $c ): DashboardCustomizationEnforcer {
 				return new DashboardCustomizationEnforcer( $c->get( RoleResolver::class ) );
@@ -350,6 +366,14 @@ final class Plugin {
 		// Dashboard customization enforcer.
 		$dash_enforcer = $this->container->get( DashboardCustomizationEnforcer::class );
 		$dash_enforcer->init();
+
+		// Appearance tab: handle saves.
+		$appearance_tab = $this->container->get( AppearanceTab::class );
+		add_action( 'admin_init', [ $appearance_tab, 'handle_save' ] );
+
+		// Appearance enforcer — output custom CSS.
+		$appearance_enforcer = $this->container->get( AppearanceEnforcer::class );
+		$appearance_enforcer->init();
 
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );

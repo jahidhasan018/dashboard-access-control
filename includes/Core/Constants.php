@@ -19,6 +19,7 @@ final class Constants {
 	public const OPT_DB_VERSION      = 'dac_db_version';
 	public const OPT_LAST_BACKUP     = 'dac_last_backup';
 	public const OPT_SELECTED_ROLES  = 'dac_selected_roles';
+	public const OPT_APPEARANCE      = 'dac_appearance_settings';
 
 	// ── Capabilities ───────────────────────────────────────────────────────
 	public const CAP_MANAGE_SETTINGS = 'dac_manage_settings';
@@ -58,4 +59,21 @@ final class Constants {
 	public const DASH_REMOVE_HELP_TAB       = 'remove_help_tab';
 	public const DASH_FULL_WIDTH            = 'full_width_dashboard';
 	public const DASH_DISABLE_DRAGGING      = 'disable_dragging';
+
+	// ── Appearance Keys ───────────────────────────────────────────────────
+	public const APPEAR_ADMIN_BG            = 'admin_background';
+	public const APPEAR_SIDEBAR_BG          = 'sidebar_background';
+	public const APPEAR_SIDEBAR_HOVER       = 'sidebar_hover_color';
+	public const APPEAR_SIDEBAR_TEXT        = 'sidebar_text_color';
+	public const APPEAR_SIDEBAR_TEXT_HOVER  = 'sidebar_text_hover_color';
+	public const APPEAR_SIDEBAR_FONT_SIZE   = 'sidebar_font_size';
+	public const APPEAR_SIDEBAR_WIDTH       = 'sidebar_width';
+	public const APPEAR_SIDEBAR_ALIGN       = 'sidebar_text_align';
+	public const APPEAR_ADMIN_TEXT_COLOR    = 'admin_text_color';
+	public const APPEAR_ADMIN_LINK_COLOR    = 'admin_link_color';
+	public const APPEAR_ADMIN_BTN_COLOR     = 'admin_button_color';
+	public const APPEAR_ADMIN_BTN_TEXT      = 'admin_button_text_color';
+	public const APPEAR_ADMIN_BORDER_COLOR  = 'admin_border_color';
+	public const APPEAR_BODY_BG_IMAGE       = 'body_background_image';
+	public const APPEAR_BODY_BG_SIZE        = 'body_background_size';
 }
