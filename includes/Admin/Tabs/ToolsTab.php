@@ -5,6 +5,7 @@ namespace DashboardAccessControl\Admin\Tabs;
 
 use DashboardAccessControl\Core\Constants;
 use DashboardAccessControl\RoleAccess\RoleProfileRepository;
+use DashboardAccessControl\CustomCode\CodeInjector;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -75,12 +76,30 @@ final class ToolsTab {
 	 * JSON export — stream as download.
 	 */
 	private function handle_export(): void {
+		// Export custom code from CPT.
+		$custom_code = [];
+		$query = new \WP_Query( [
+			'post_type'      => 'dac_custom_code',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		] );
+		foreach ( $query->posts as $post_id ) {
+			$role_id = get_post_meta( $post_id, '_dac_role_id', true );
+			$code    = get_post_meta( $post_id, '_dac_custom_code', true );
+			if ( $role_id && is_array( $code ) ) {
+				$custom_code[ $role_id ] = $code;
+			}
+		}
+
 		$data = [
-			'version'    => Constants::CURRENT_DB_VERSION,
-			'exported'   => current_time( 'mysql', true ),
-			'profiles'   => get_option( Constants::OPT_ROLE_PROFILES, [] ),
-			'white_label'=> get_option( Constants::OPT_WHITE_LABEL, [] ),
-			'general'    => get_option( Constants::OPT_GENERAL, [] ),
+			'version'         => Constants::CURRENT_DB_VERSION,
+			'exported'        => current_time( 'mysql', true ),
+			'profiles'        => $this->options->get( Constants::OPT_ROLE_PROFILES, [] ),
+			'white_label'     => $this->options->get( Constants::OPT_WHITE_LABEL, [] ),
+			'general'         => $this->options->get( Constants::OPT_GENERAL, [] ),
+			'custom_code'     => $custom_code,
+			'selected_roles'  => $this->options->get( Constants::OPT_SELECTED_ROLES, [] ),
 		];
 
 		$filename = 'dac-export-' . gmdate( 'Y-m-d-His' ) . '.json';
@@ -144,7 +163,26 @@ final class ToolsTab {
 
 		// Replace general settings.
 		if ( ! empty( $data['general'] ) && is_array( $data['general'] ) ) {
-			update_option( Constants::OPT_GENERAL, $data['general'] );
+			$general_existing = get_option( Constants::OPT_GENERAL, [] );
+			$general_merged   = array_merge( $general_existing, $data['general'] );
+			update_option( Constants::OPT_GENERAL, $general_merged );
+		}
+
+		// Import custom code.
+		if ( ! empty( $data['custom_code'] ) && is_array( $data['custom_code'] ) ) {
+			$injector = new CodeInjector();
+			$roles    = wp_roles()->roles;
+			foreach ( $data['custom_code'] as $role_slug => $code ) {
+				$role_slug = sanitize_key( $role_slug );
+				if ( isset( $roles[ $role_slug ] ) && is_array( $code ) ) {
+					$injector->save_meta( $role_slug, $code );
+				}
+			}
+		}
+
+		// Import selected roles.
+		if ( ! empty( $data['selected_roles'] ) && is_array( $data['selected_roles'] ) ) {
+			update_option( Constants::OPT_SELECTED_ROLES, $data['selected_roles'] );
 		}
 
 		add_settings_error( 'dac_notices', 'import_done', __( 'Settings imported successfully. A backup of your previous settings was saved.', 'dashboard-access-control' ), 'updated' );
@@ -154,12 +192,29 @@ final class ToolsTab {
 	 * Backup current settings to an option as a safety net.
 	 */
 	private function backup_current(): void {
+		// Backup custom code from CPT.
+		$custom_code = [];
+		$query = new \WP_Query( [
+			'post_type'      => 'dac_custom_code',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		] );
+		foreach ( $query->posts as $post_id ) {
+			$role_id = get_post_meta( $post_id, '_dac_role_id', true );
+			$code    = get_post_meta( $post_id, '_dac_custom_code', true );
+			if ( $role_id && is_array( $code ) ) {
+				$custom_code[ $role_id ] = $code;
+			}
+		}
+
 		$backup = [
-			'profiles'    => get_option( Constants::OPT_ROLE_PROFILES, [] ),
-			'white_label' => get_option( Constants::OPT_WHITE_LABEL, [] ),
-			'general'     => get_option( Constants::OPT_GENERAL, [] ),
+			'profiles'        => get_option( Constants::OPT_ROLE_PROFILES, [] ),
+			'white_label'     => get_option( Constants::OPT_WHITE_LABEL, [] ),
+			'general'         => get_option( Constants::OPT_GENERAL, [] ),
+			'custom_code'     => $custom_code,
+			'selected_roles'  => get_option( Constants::OPT_SELECTED_ROLES, [] ),
 		];
-		// Bug 1 fix: was set_option() which doesn't exist — use update_option().
 		update_option( Constants::OPT_LAST_BACKUP, $backup );
 	}
 
@@ -169,6 +224,7 @@ final class ToolsTab {
 	private function handle_reset(): void {
 		update_option( Constants::OPT_ROLE_PROFILES, [] );
 		update_option( Constants::OPT_WHITE_LABEL, [] );
+		update_option( Constants::OPT_SELECTED_ROLES, [] );
 		update_option(
 			Constants::OPT_GENERAL,
 			[
@@ -179,6 +235,17 @@ final class ToolsTab {
 			]
 		);
 
+		// Delete all custom code posts.
+		$query = new \WP_Query( [
+			'post_type'      => 'dac_custom_code',
+			'post_status'    => 'publish',
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		] );
+		foreach ( $query->posts as $post_id ) {
+			wp_delete_post( $post_id, true );
+		}
+
 		add_settings_error( 'dac_notices', 'reset_done', __( 'All settings have been reset to defaults.', 'dashboard-access-control' ), 'updated' );
 	}
 
@@ -186,7 +253,6 @@ final class ToolsTab {
 	 * Restore the last backup.
 	 */
 	private function handle_restore_backup(): void {
-		// Bug 2 fix: was Constants::OPT_PREFIX which doesn't exist — use Constants::OPT_LAST_BACKUP.
 		$backup = get_option( Constants::OPT_LAST_BACKUP, null );
 		if ( ! $backup || ! is_array( $backup ) ) {
 			add_settings_error( 'dac_notices', 'no_backup', __( 'No backup found.', 'dashboard-access-control' ), 'error' );
@@ -201,6 +267,32 @@ final class ToolsTab {
 		}
 		if ( isset( $backup['general'] ) ) {
 			update_option( Constants::OPT_GENERAL, $backup['general'] );
+		}
+
+		// Restore custom code.
+		if ( ! empty( $backup['custom_code'] ) && is_array( $backup['custom_code'] ) ) {
+			$injector = new CodeInjector();
+			// Delete all current custom code first.
+			$query = new \WP_Query( [
+				'post_type'      => 'dac_custom_code',
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			] );
+			foreach ( $query->posts as $post_id ) {
+				wp_delete_post( $post_id, true );
+			}
+			// Restore from backup.
+			foreach ( $backup['custom_code'] as $role_slug => $code ) {
+				if ( is_array( $code ) ) {
+					$injector->save_meta( $role_slug, $code );
+				}
+			}
+		}
+
+		// Restore selected roles.
+		if ( isset( $backup['selected_roles'] ) ) {
+			update_option( Constants::OPT_SELECTED_ROLES, $backup['selected_roles'] );
 		}
 
 		add_settings_error( 'dac_notices', 'backup_restored', __( 'Settings restored from backup.', 'dashboard-access-control' ), 'updated' );
