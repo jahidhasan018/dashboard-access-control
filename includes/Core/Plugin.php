@@ -218,14 +218,14 @@ final class Plugin {
 		$this->container->set(
 			AppearanceTab::class,
 			function ( Container $c ): AppearanceTab {
-				return new AppearanceTab( $c->get( Options::class ) );
+				return new AppearanceTab( $c->get( RoleProfileRepository::class ) );
 			}
 		);
 
 		$this->container->set(
 			AppearanceEnforcer::class,
 			function ( Container $c ): AppearanceEnforcer {
-				return new AppearanceEnforcer( $c->get( Options::class ) );
+				return new AppearanceEnforcer( $c->get( RoleResolver::class ) );
 			}
 		);
 

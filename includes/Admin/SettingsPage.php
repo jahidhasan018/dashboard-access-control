@@ -152,7 +152,9 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\AppearanceTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\AppearanceTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\AppearanceTab( $this->options );
+				$tab = new \DashboardAccessControl\Admin\Tabs\AppearanceTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
 				$tab->render();
 			},
 		];

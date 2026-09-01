@@ -38,6 +38,10 @@ final class Assets {
 			DAC_VERSION
 		);
 
+		// Color picker.
+		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_script( 'wp-color-picker' );
+
 		wp_enqueue_script(
 			'dac-admin',
 			DAC_PLUGIN_URL . 'assets/js/admin.js',

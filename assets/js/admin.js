@@ -218,5 +218,10 @@
 
 		/* ── Init stats on load ────────────────────────────────────────── */
 		updateStats();
+
+		/* ── Color Picker Init ────────────────────────────────────────── */
+		if (typeof jQuery !== 'undefined' && jQuery.fn.wpColorPicker) {
+			jQuery('.dac-color-picker').wpColorPicker();
+		}
 	});
 })();

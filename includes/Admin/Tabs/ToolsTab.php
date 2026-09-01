@@ -100,7 +100,6 @@ final class ToolsTab {
 			'general'         => $this->options->get( Constants::OPT_GENERAL, [] ),
 			'custom_code'     => $custom_code,
 			'selected_roles'  => $this->options->get( Constants::OPT_SELECTED_ROLES, [] ),
-			'appearance'      => $this->options->get( Constants::OPT_APPEARANCE, [] ),
 		];
 
 		$filename = 'dac-export-' . gmdate( 'Y-m-d-His' ) . '.json';
@@ -186,13 +185,6 @@ final class ToolsTab {
 			update_option( Constants::OPT_SELECTED_ROLES, $data['selected_roles'] );
 		}
 
-		// Merge appearance settings.
-		if ( ! empty( $data['appearance'] ) && is_array( $data['appearance'] ) ) {
-			$appear_existing = get_option( Constants::OPT_APPEARANCE, [] );
-			$appear_merged   = array_merge( $appear_existing, $data['appearance'] );
-			update_option( Constants::OPT_APPEARANCE, $appear_merged );
-		}
-
 		add_settings_error( 'dac_notices', 'import_done', __( 'Settings imported successfully. A backup of your previous settings was saved.', 'dashboard-access-control' ), 'updated' );
 	}
 
@@ -222,7 +214,6 @@ final class ToolsTab {
 			'general'         => get_option( Constants::OPT_GENERAL, [] ),
 			'custom_code'     => $custom_code,
 			'selected_roles'  => get_option( Constants::OPT_SELECTED_ROLES, [] ),
-			'appearance'      => get_option( Constants::OPT_APPEARANCE, [] ),
 		];
 		update_option( Constants::OPT_LAST_BACKUP, $backup );
 	}
@@ -234,7 +225,6 @@ final class ToolsTab {
 		update_option( Constants::OPT_ROLE_PROFILES, [] );
 		update_option( Constants::OPT_WHITE_LABEL, [] );
 		update_option( Constants::OPT_SELECTED_ROLES, [] );
-		update_option( Constants::OPT_APPEARANCE, [] );
 		update_option(
 			Constants::OPT_GENERAL,
 			[
@@ -303,11 +293,6 @@ final class ToolsTab {
 		// Restore selected roles.
 		if ( isset( $backup['selected_roles'] ) ) {
 			update_option( Constants::OPT_SELECTED_ROLES, $backup['selected_roles'] );
-		}
-
-		// Restore appearance settings.
-		if ( isset( $backup['appearance'] ) ) {
-			update_option( Constants::OPT_APPEARANCE, $backup['appearance'] );
 		}
 
 		add_settings_error( 'dac_notices', 'backup_restored', __( 'Settings restored from backup.', 'dashboard-access-control' ), 'updated' );

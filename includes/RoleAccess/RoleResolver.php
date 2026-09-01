@@ -129,6 +129,7 @@ final class RoleResolver {
 				'xmlrpc_enabled' => true,
 			],
 			Constants::PROFILE_DASHBOARD   => [],
+			Constants::PROFILE_APPEARANCE  => [],
 		];
 	}
 }

@@ -48,6 +48,7 @@ final class Constants {
 	public const PROFILE_WHITE_LABEL = 'white_label';
 	public const PROFILE_CUSTOM_CODE = 'custom_code';
 	public const PROFILE_SECURITY   = 'security';
+	public const PROFILE_APPEARANCE = 'appearance';
 
 	// ── Conflict Strategies ────────────────────────────────────────────────
 	public const STRATEGY_LEAST_PRIVILEGE  = 'least_privilege';

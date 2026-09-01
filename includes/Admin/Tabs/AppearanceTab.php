@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace DashboardAccessControl\Admin\Tabs;
 
 use DashboardAccessControl\Core\Constants;
+use DashboardAccessControl\RoleAccess\RoleProfileRepository;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -11,14 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Appearance tab — customize admin sidebar and body appearance.
+ * Appearance tab — customize admin sidebar and body appearance per role.
  */
 final class AppearanceTab {
 
-	private Options $options;
+	private RoleProfileRepository $repository;
 
-	public function __construct( Options $options ) {
-		$this->options = $options;
+	public function __construct( RoleProfileRepository $repository ) {
+		$this->repository = $repository;
 	}
 
 	/**
@@ -39,231 +40,214 @@ final class AppearanceTab {
 	 * Render the tab content.
 	 */
 	public function render(): void {
-		$settings = $this->options->get( Constants::OPT_APPEARANCE, [] );
+		$roles    = wp_roles()->roles;
+		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		echo '<div class="dac-appearance">';
-		echo '<h2>' . esc_html__( 'Admin Appearance Settings', 'dashboard-access-control' ) . '</h2>';
-		echo '<p class="dac-subtitle">' . esc_html__( 'Customize the look and feel of the WordPress admin area. Changes are applied globally to all users.', 'dashboard-access-control' ) . '</p>';
+		// Persist selected role: use GET param if set, otherwise load from storage.
+		$options = $this->repository->get_options();
+		if ( '' !== $selected && isset( $roles[ $selected ] ) ) {
+			$options->set_selected_role( self::id(), $selected );
+		} else {
+			$selected = $options->get_selected_role( self::id() );
+		}
+
+		// Default to first role if nothing stored yet.
+		if ( '' === $selected || ! isset( $roles[ $selected ] ) ) {
+			$selected = array_key_first( $roles );
+		}
+
+		// Build list of roles that have appearance settings applied.
+		$all_profiles  = $this->repository->get_all();
+		$applied_roles = [];
+		foreach ( $all_profiles as $slug => $profile ) {
+			$appear = $profile[ Constants::PROFILE_APPEARANCE ] ?? [];
+			if ( ! empty( $appear ) ) {
+				$applied_roles[] = $slug;
+			}
+		}
+
+		$current = $this->repository->get( $selected );
+		$appear  = $current[ Constants::PROFILE_APPEARANCE ] ?? [];
 
 		if ( isset( $_GET['saved'] ) ) {
 			echo '<div class="notice notice-success is-dismissible"><p>';
 			echo esc_html__( 'Appearance settings saved.', 'dashboard-access-control' );
 			echo '</p></div>';
 		}
+		?>
+		<div class="dac-section">
+			<h2 class="dac-section-title"><?php esc_html_e( 'Admin Appearance Settings', 'dashboard-access-control' ); ?></h2>
+			<p class="dac-section-desc">
+				<?php esc_html_e( 'Customize the look and feel of the WordPress admin area for specific roles.', 'dashboard-access-control' ); ?>
+			</p>
+		</div>
 
-		echo '<form method="post" enctype="multipart/form-data">';
-		wp_nonce_field( 'dac_save_appearance', '_dac_nonce' );
-		echo '<input type="hidden" name="dac_action" value="dac_save_appearance">';
+		<!-- Role selector with checkmarks -->
+		<div class="dac-card dac-role-selector">
+			<div class="dac-card-header">
+				<span class="dac-icon dac-icon-users"></span>
+				<strong><?php esc_html_e( 'Select Role', 'dashboard-access-control' ); ?></strong>
+			</div>
+			<div class="dac-card-body">
+				<div class="dac-role-picker">
+					<select id="dac-appear-role" class="dac-select" onchange="if(this.value)window.location.href='<?php echo esc_url( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() . '&role=' ) ); ?>' + this.value">
+						<?php foreach ( $roles as $slug => $role_data ) :
+							$has_settings = in_array( $slug, $applied_roles, true );
+							$checkmark    = $has_settings ? ' ✓' : '';
+						?>
+							<option value="<?php echo esc_attr( $slug ); ?>" <?php selected( $slug, $selected ); ?>>
+								<?php echo esc_html( $role_data['name'] . $checkmark ); ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
+			</div>
+		</div>
 
-		// ── Sidebar Section ──────────────────────────────────────────────────
-		echo '<div class="dac-card">';
-		echo '<div class="dac-card-header">';
-		echo '<span class="dac-icon dac-icon-admin-bar"></span>';
-		echo '<strong>' . esc_html__( 'Sidebar Settings', 'dashboard-access-control' ) . '</strong>';
-		echo '</div>';
-		echo '<div class="dac-card-body">';
+		<form method="post" enctype="multipart/form-data" action="<?php echo esc_url( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() ) ); ?>">
+			<?php wp_nonce_field( 'dac_save_appearance', '_dac_nonce' ); ?>
+			<input type="hidden" name="dac_action" value="dac_save_appearance">
+			<input type="hidden" name="dac_role" value="<?php echo esc_attr( $selected ); ?>">
 
-		echo '<table class="form-table">';
+			<div class="dac-section">
+				<h3 class="dac-section-title"><?php echo esc_html( $roles[ $selected ]['name'] ); ?> — <?php esc_html_e( 'Appearance Settings', 'dashboard-access-control' ); ?></h3>
+			</div>
 
-		// Sidebar background.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Background Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_SIDEBAR_BG ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_BG ] ?? '' )
-		);
-		echo '</td></tr>';
+			<!-- Sidebar Section -->
+			<div class="dac-card">
+				<div class="dac-card-header">
+					<span class="dac-icon dac-icon-admin-bar"></span>
+					<strong><?php esc_html_e( 'Sidebar Settings', 'dashboard-access-control' ); ?></strong>
+				</div>
+				<div class="dac-card-body">
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Background Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_BG ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_BG ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Text Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_TEXT ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_TEXT ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Hover Background', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_HOVER ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_HOVER ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Text Hover Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_TEXT_HOVER ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_TEXT_HOVER ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Font Size', 'dashboard-access-control' ); ?></th>
+							<td>
+								<input type="number" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_FONT_SIZE ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_FONT_SIZE ] ?? '' ); ?>" min="10" max="24" step="1" class="small-text" /> px
+								<p class="description"><?php esc_html_e( 'Default: 13px. Range: 10–24px.', 'dashboard-access-control' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Width', 'dashboard-access-control' ); ?></th>
+							<td>
+								<input type="number" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_WIDTH ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_SIDEBAR_WIDTH ] ?? '' ); ?>" min="120" max="400" step="1" class="small-text" /> px
+								<p class="description"><?php esc_html_e( 'Default: 160px. Range: 120–400px.', 'dashboard-access-control' ); ?></p>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Sidebar Text Alignment', 'dashboard-access-control' ); ?></th>
+							<td>
+								<select name="dac_appear[<?php echo esc_attr( Constants::APPEAR_SIDEBAR_ALIGN ); ?>]">
+									<option value="left" <?php selected( $appear[ Constants::APPEAR_SIDEBAR_ALIGN ] ?? '', 'left' ); ?>><?php esc_html_e( 'Left', 'dashboard-access-control' ); ?></option>
+									<option value="center" <?php selected( $appear[ Constants::APPEAR_SIDEBAR_ALIGN ] ?? '', 'center' ); ?>><?php esc_html_e( 'Center', 'dashboard-access-control' ); ?></option>
+									<option value="right" <?php selected( $appear[ Constants::APPEAR_SIDEBAR_ALIGN ] ?? '', 'right' ); ?>><?php esc_html_e( 'Right', 'dashboard-access-control' ); ?></option>
+								</select>
+							</td>
+						</tr>
+					</table>
+				</div>
+			</div>
 
-		// Sidebar text color.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Text Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_SIDEBAR_TEXT ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_TEXT ] ?? '' )
-		);
-		echo '</td></tr>';
+			<!-- Body / Content Section -->
+			<div class="dac-card">
+				<div class="dac-card-header">
+					<span class="dac-icon dac-icon-admin-bar"></span>
+					<strong><?php esc_html_e( 'Body & Content Settings', 'dashboard-access-control' ); ?></strong>
+				</div>
+				<div class="dac-card-body">
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Admin Body Background', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_BG ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_BG ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Body Background Image', 'dashboard-access-control' ); ?></th>
+							<td>
+								<?php
+								$bg_id = $appear[ Constants::APPEAR_BODY_BG_IMAGE ] ?? 0;
+								if ( $bg_id ) {
+									$bg_url = wp_get_attachment_image_url( $bg_id, 'medium' );
+									if ( $bg_url ) {
+										printf( '<p><img src="%s" alt="%s" style="max-width:200px;height:auto;" /></p>', esc_url( $bg_url ), esc_attr__( 'Current Background', 'dashboard-access-control' ) );
+									}
+								}
+								?>
+								<input type="hidden" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_BODY_BG_IMAGE ); ?>]" value="<?php echo esc_attr( $bg_id ); ?>" />
+								<input type="file" name="dac_appear_bg_image" accept="image/*" />
+								<?php if ( $bg_id ) : ?>
+									<label><input type="checkbox" name="dac_appear[remove_bg_image]" value="1"> <?php esc_html_e( 'Remove image', 'dashboard-access-control' ); ?></label>
+								<?php endif; ?>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Background Size', 'dashboard-access-control' ); ?></th>
+							<td>
+								<select name="dac_appear[<?php echo esc_attr( Constants::APPEAR_BODY_BG_SIZE ); ?>]">
+									<option value="cover" <?php selected( $appear[ Constants::APPEAR_BODY_BG_SIZE ] ?? '', 'cover' ); ?>><?php esc_html_e( 'Cover', 'dashboard-access-control' ); ?></option>
+									<option value="contain" <?php selected( $appear[ Constants::APPEAR_BODY_BG_SIZE ] ?? '', 'contain' ); ?>><?php esc_html_e( 'Contain', 'dashboard-access-control' ); ?></option>
+									<option value="auto" <?php selected( $appear[ Constants::APPEAR_BODY_BG_SIZE ] ?? '', 'auto' ); ?>><?php esc_html_e( 'Auto', 'dashboard-access-control' ); ?></option>
+									<option value="repeat" <?php selected( $appear[ Constants::APPEAR_BODY_BG_SIZE ] ?? '', 'repeat' ); ?>><?php esc_html_e( 'Repeat', 'dashboard-access-control' ); ?></option>
+								</select>
+							</td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Admin Text Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_TEXT_COLOR ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_TEXT_COLOR ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Admin Link Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_LINK_COLOR ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_LINK_COLOR ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+					</table>
+				</div>
+			</div>
 
-		// Sidebar hover color.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Hover Background', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_SIDEBAR_HOVER ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_HOVER ] ?? '' )
-		);
-		echo '</td></tr>';
+			<!-- Buttons & Borders Section -->
+			<div class="dac-card">
+				<div class="dac-card-header">
+					<span class="dac-icon dac-icon-admin-bar"></span>
+					<strong><?php esc_html_e( 'Buttons & Borders', 'dashboard-access-control' ); ?></strong>
+				</div>
+				<div class="dac-card-body">
+					<table class="form-table">
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Primary Button Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_BTN_COLOR ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_BTN_COLOR ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Primary Button Text Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_BTN_TEXT ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_BTN_TEXT ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+						<tr>
+							<th scope="row"><?php esc_html_e( 'Admin Border Color', 'dashboard-access-control' ); ?></th>
+							<td><input type="text" name="dac_appear[<?php echo esc_attr( Constants::APPEAR_ADMIN_BORDER_COLOR ); ?>]" value="<?php echo esc_attr( $appear[ Constants::APPEAR_ADMIN_BORDER_COLOR ] ?? '' ); ?>" class="dac-color-picker" /></td>
+						</tr>
+					</table>
+				</div>
+			</div>
 
-		// Sidebar text hover color.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Text Hover Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_SIDEBAR_TEXT_HOVER ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_TEXT_HOVER ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		// Sidebar font size.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Font Size', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="number" name="dac_appear[%s]" value="%s" min="10" max="24" step="1" class="small-text" /> px',
-			esc_attr( Constants::APPEAR_SIDEBAR_FONT_SIZE ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_FONT_SIZE ] ?? '' )
-		);
-		echo '<p class="description">' . esc_html__( 'Default: 13px. Range: 10–24px.', 'dashboard-access-control' ) . '</p>';
-		echo '</td></tr>';
-
-		// Sidebar width.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Width', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="number" name="dac_appear[%s]" value="%s" min="120" max="400" step="1" class="small-text" /> px',
-			esc_attr( Constants::APPEAR_SIDEBAR_WIDTH ),
-			esc_attr( $settings[ Constants::APPEAR_SIDEBAR_WIDTH ] ?? '' )
-		);
-		echo '<p class="description">' . esc_html__( 'Default: 160px. Range: 120–400px.', 'dashboard-access-control' ) . '</p>';
-		echo '</td></tr>';
-
-		// Sidebar text align.
-		echo '<tr><th scope="row">' . esc_html__( 'Sidebar Text Alignment', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<select name="dac_appear[%s]">',
-			esc_attr( Constants::APPEAR_SIDEBAR_ALIGN )
-		);
-		$current_align = $settings[ Constants::APPEAR_SIDEBAR_ALIGN ] ?? 'left';
-		printf( '<option value="left" %s>%s</option>', selected( $current_align, 'left', false ), esc_html__( 'Left', 'dashboard-access-control' ) );
-		printf( '<option value="center" %s>%s</option>', selected( $current_align, 'center', false ), esc_html__( 'Center', 'dashboard-access-control' ) );
-		printf( '<option value="right" %s>%s</option>', selected( $current_align, 'right', false ), esc_html__( 'Right', 'dashboard-access-control' ) );
-		echo '</select>';
-		echo '</td></tr>';
-
-		echo '</table>';
-		echo '</div>';
-		echo '</div>';
-
-		// ── Body / Content Section ───────────────────────────────────────────
-		echo '<div class="dac-card">';
-		echo '<div class="dac-card-header">';
-		echo '<span class="dac-icon dac-icon-admin-bar"></span>';
-		echo '<strong>' . esc_html__( 'Body & Content Settings', 'dashboard-access-control' ) . '</strong>';
-		echo '</div>';
-		echo '<div class="dac-card-body">';
-
-		echo '<table class="form-table">';
-
-		// Admin background.
-		echo '<tr><th scope="row">' . esc_html__( 'Admin Body Background', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_BG ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_BG ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		// Body background image.
-		echo '<tr><th scope="row">' . esc_html__( 'Body Background Image', 'dashboard-access-control' ) . '</th><td>';
-		$bg_id = $settings[ Constants::APPEAR_BODY_BG_IMAGE ] ?? 0;
-		if ( $bg_id ) {
-			$bg_url = wp_get_attachment_image_url( $bg_id, 'medium' );
-			if ( $bg_url ) {
-				printf( '<p><img src="%s" alt="%s" style="max-width:200px;height:auto;" /></p>', esc_url( $bg_url ), esc_attr__( 'Current Background', 'dashboard-access-control' ) );
-			}
-		}
-		printf(
-			'<input type="hidden" name="dac_appear[%s]" value="%d" />',
-			esc_attr( Constants::APPEAR_BODY_BG_IMAGE ),
-			$bg_id
-		);
-		echo '<input type="file" name="dac_appear_bg_image" accept="image/*" />';
-		if ( $bg_id ) {
-			printf(
-				' <label><input type="checkbox" name="dac_appear[remove_bg_image]" value="1"> %s</label>',
-				esc_html__( 'Remove image', 'dashboard-access-control' )
-			);
-		}
-		echo '</td></tr>';
-
-		// Background size.
-		echo '<tr><th scope="row">' . esc_html__( 'Background Size', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<select name="dac_appear[%s]">',
-			esc_attr( Constants::APPEAR_BODY_BG_SIZE )
-		);
-		$current_size = $settings[ Constants::APPEAR_BODY_BG_SIZE ] ?? 'cover';
-		printf( '<option value="cover" %s>%s</option>', selected( $current_size, 'cover', false ), esc_html__( 'Cover', 'dashboard-access-control' ) );
-		printf( '<option value="contain" %s>%s</option>', selected( $current_size, 'contain', false ), esc_html__( 'Contain', 'dashboard-access-control' ) );
-		printf( '<option value="auto" %s>%s</option>', selected( $current_size, 'auto', false ), esc_html__( 'Auto', 'dashboard-access-control' ) );
-		printf( '<option value="repeat" %s>%s</option>', selected( $current_size, 'repeat', false ), esc_html__( 'Repeat', 'dashboard-access-control' ) );
-		echo '</select>';
-		echo '</td></tr>';
-
-		// Text color.
-		echo '<tr><th scope="row">' . esc_html__( 'Admin Text Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_TEXT_COLOR ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_TEXT_COLOR ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		// Link color.
-		echo '<tr><th scope="row">' . esc_html__( 'Admin Link Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_LINK_COLOR ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_LINK_COLOR ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		echo '</table>';
-		echo '</div>';
-		echo '</div>';
-
-		// ── Buttons & Borders Section ────────────────────────────────────────
-		echo '<div class="dac-card">';
-		echo '<div class="dac-card-header">';
-		echo '<span class="dac-icon dac-icon-admin-bar"></span>';
-		echo '<strong>' . esc_html__( 'Buttons & Borders', 'dashboard-access-control' ) . '</strong>';
-		echo '</div>';
-		echo '<div class="dac-card-body">';
-
-		echo '<table class="form-table">';
-
-		// Button color.
-		echo '<tr><th scope="row">' . esc_html__( 'Primary Button Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_BTN_COLOR ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_BTN_COLOR ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		// Button text color.
-		echo '<tr><th scope="row">' . esc_html__( 'Primary Button Text Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_BTN_TEXT ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_BTN_TEXT ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		// Border color.
-		echo '<tr><th scope="row">' . esc_html__( 'Admin Border Color', 'dashboard-access-control' ) . '</th><td>';
-		printf(
-			'<input type="text" name="dac_appear[%s]" value="%s" class="dac-color-picker" />',
-			esc_attr( Constants::APPEAR_ADMIN_BORDER_COLOR ),
-			esc_attr( $settings[ Constants::APPEAR_ADMIN_BORDER_COLOR ] ?? '' )
-		);
-		echo '</td></tr>';
-
-		echo '</table>';
-		echo '</div>';
-		echo '</div>';
-
-		// Save button.
-		echo '<div class="dac-submit-row">';
-		submit_button( __( 'Save Appearance Settings', 'dashboard-access-control' ), 'primary', 'submit', false );
-		echo '</div>';
-
-		echo '</form>';
-		echo '</div>';
+			<div class="dac-submit-row">
+				<?php submit_button( __( 'Save Appearance Settings', 'dashboard-access-control' ), 'primary', 'submit', false ); ?>
+			</div>
+		</form>
+		<?php
 	}
 
 	/**
@@ -280,12 +264,23 @@ final class AppearanceTab {
 
 		check_admin_referer( 'dac_save_appearance', '_dac_nonce' );
 
+		$role_slug = sanitize_text_field( wp_unslash( $_POST['dac_role'] ?? '' ) );
+		if ( '' === $role_slug ) {
+			return;
+		}
+
+		$roles = wp_roles()->roles;
+		if ( ! isset( $roles[ $role_slug ] ) ) {
+			return;
+		}
+
 		$raw = $_POST['dac_appear'] ?? [];
 		if ( ! is_array( $raw ) ) {
 			$raw = [];
 		}
 
-		$settings = $this->options->get( Constants::OPT_APPEARANCE, [] );
+		$profile = $this->repository->get( $role_slug );
+		$appear  = $profile[ Constants::PROFILE_APPEARANCE ] ?? [];
 
 		// Handle background image upload.
 		if ( ! empty( $_FILES['dac_appear_bg_image']['tmp_name'] ) ) {
@@ -296,14 +291,14 @@ final class AppearanceTab {
 			}
 			$bg_id = $this->handle_image_upload( 'dac_appear_bg_image', $attach_dir );
 			if ( $bg_id ) {
-				$settings[ Constants::APPEAR_BODY_BG_IMAGE ] = $bg_id;
+				$appear[ Constants::APPEAR_BODY_BG_IMAGE ] = $bg_id;
 			}
 		}
 		if ( ! empty( $raw['remove_bg_image'] ) ) {
-			unset( $settings[ Constants::APPEAR_BODY_BG_IMAGE ] );
+			unset( $appear[ Constants::APPEAR_BODY_BG_IMAGE ] );
 		}
 
-		// Text fields (color pickers, font sizes, etc).
+		// Text fields.
 		$text_fields = [
 			Constants::APPEAR_ADMIN_BG,
 			Constants::APPEAR_SIDEBAR_BG,
@@ -323,15 +318,16 @@ final class AppearanceTab {
 
 		foreach ( $text_fields as $field ) {
 			if ( isset( $raw[ $field ] ) && '' !== $raw[ $field ] ) {
-				$settings[ $field ] = sanitize_text_field( wp_unslash( $raw[ $field ] ) );
+				$appear[ $field ] = sanitize_text_field( wp_unslash( $raw[ $field ] ) );
 			} elseif ( ! isset( $raw[ $field ] ) || '' === $raw[ $field ] ) {
-				unset( $settings[ $field ] );
+				unset( $appear[ $field ] );
 			}
 		}
 
-		$this->options->update( Constants::OPT_APPEARANCE, $settings );
+		$profile[ Constants::PROFILE_APPEARANCE ] = $appear;
+		$this->repository->save( $role_slug, $profile );
 
-		wp_safe_redirect( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() . '&saved=1' ) );
+		wp_safe_redirect( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() . '&role=' . $role_slug . '&saved=1' ) );
 		exit;
 	}
 
