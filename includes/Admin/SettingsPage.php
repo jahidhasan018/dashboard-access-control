@@ -58,18 +58,6 @@ final class SettingsPage {
 	private function register_tabs(): void {
 		$this->tabs = [];
 
-		$this->tabs[ \DashboardAccessControl\Admin\Tabs\RoleManagerTab::id() ] = [
-			'label'    => \DashboardAccessControl\Admin\Tabs\RoleManagerTab::label(),
-			'callback' => function () {
-				$tab = $this->container
-					? $this->container->get( \DashboardAccessControl\Admin\Tabs\RoleManagerTab::class )
-					: new \DashboardAccessControl\Admin\Tabs\RoleManagerTab(
-						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-					);
-				$tab->render();
-			},
-		];
-
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\MenuControlTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\MenuControlTab::label(),
 			'callback' => function () {

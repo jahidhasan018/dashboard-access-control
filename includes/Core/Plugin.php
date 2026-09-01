@@ -5,7 +5,6 @@ namespace DashboardAccessControl\Core;
 
 use DashboardAccessControl\Admin\SettingsPage;
 use DashboardAccessControl\Admin\Assets;
-use DashboardAccessControl\Admin\Tabs\RoleManagerTab;
 use DashboardAccessControl\Admin\Tabs\MenuControlTab;
 use DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab;
 use DashboardAccessControl\Admin\Tabs\AdminBarTab;
@@ -100,13 +99,6 @@ final class Plugin {
 					$c->get( RoleProfileRepository::class ),
 					$c->get( Options::class )
 				);
-			}
-		);
-
-		$this->container->set(
-			RoleManagerTab::class,
-			function ( Container $c ): RoleManagerTab {
-				return new RoleManagerTab( $c->get( RoleProfileRepository::class ) );
 			}
 		);
 
@@ -296,11 +288,6 @@ final class Plugin {
 		$menu_tab = $this->container->get( MenuControlTab::class );
 		add_action( 'admin_menu', [ $menu_tab, 'capture_menu' ], 9999 );
 		add_action( 'admin_init', [ $menu_tab, 'handle_save' ] );
-
-		// Role manager tab: handle saves.
-		$role_tab = $this->container->get( RoleManagerTab::class );
-		add_action( 'admin_init', [ $role_tab, 'handle_save' ] );
-		add_action( 'admin_init', [ $role_tab, 'handle_reset' ] );
 
 		// Dashboard widgets tab: capture widgets + handle saves.
 		$widgets_tab = $this->container->get( DashboardWidgetsTab::class );
