@@ -149,11 +149,6 @@ final class SettingsPage {
 			},
 		];
 
-		$this->tabs['general'] = [
-			'label'    => __( 'General', 'dashboard-access-control' ),
-			'callback' => [ $this, 'render_general_tab' ],
-		];
-
 		/**
 		 * Filter the settings tabs.
 		 *
@@ -216,14 +211,5 @@ final class SettingsPage {
 		if ( isset( $this->tabs[ $active_tab ]['callback'] ) ) {
 			call_user_func( $this->tabs[ $active_tab ]['callback'] );
 		}
-	}
-
-	/**
-	 * Default "General" tab placeholder.
-	 */
-	public function render_general_tab(): void {
-		echo '<p>';
-		echo esc_html__( 'Welcome to Dashboard Access Control. Use the tabs above to configure role-based access rules.', 'dashboard-access-control' );
-		echo '</p>';
 	}
 }
