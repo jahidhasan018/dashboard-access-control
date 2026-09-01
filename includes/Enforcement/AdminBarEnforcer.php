@@ -31,6 +31,8 @@ final class AdminBarEnforcer {
 	public function init(): void {
 		// Front-end admin bar control.
 		add_action( 'wp', [ $this, 'handle_frontend' ] );
+
+		// Back-end admin bar hiding — output CSS directly during admin bar render.
 		add_action( 'wp_before_admin_bar_render', [ $this, 'handle_backend_css' ], 1 );
 
 		// Node removal.
@@ -85,7 +87,7 @@ final class AdminBarEnforcer {
 
 		if ( ! empty( $bar['hide_backend'] ) ) {
 			add_action( 'admin_body_class', [ $this, 'add_hide_body_class' ] );
-			add_action( 'wp_head', [ $this, 'hide_admin_bar_css' ], 999 );
+			echo '<style>html #wpadminbar { display: none !important; } html,body { margin-top: 0 !important; padding-top: 0 !important; }</style>' . "\n";
 		}
 	}
 
@@ -97,13 +99,6 @@ final class AdminBarEnforcer {
 	 */
 	public function add_hide_body_class( string $classes ): string {
 		return $classes . ' dac-hide-admin-bar';
-	}
-
-	/**
-	 * Output CSS to hide the admin bar on back-end.
-	 */
-	public function hide_admin_bar_css(): void {
-		echo '<style>#adminmenuback, #adminmenubox, #adminbar { display: none !important; } body { margin-top: 0 !important; padding-top: 0 !important; }</style>' . "\n";
 	}
 
 	/**
