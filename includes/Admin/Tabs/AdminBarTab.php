@@ -142,38 +142,44 @@ final class AdminBarTab {
 		echo '<input type="hidden" name="dac_action" value="dac_save_admin_bar">';
 		echo '<input type="hidden" name="dac_role" value="' . esc_attr( $role_slug ) . '">';
 
-		echo '<h3>' . esc_html( $role_name ) . ' — ' . esc_html__( 'Admin Bar Settings', 'dashboard-access-control' ) . '</h3>';
+		echo '<div class="dac-card">';
+		echo '<div class="dac-card-header">';
+		echo '<span class="dac-icon dac-icon-admin-bar"></span>';
+		printf( '<strong>%s — %s</strong>', esc_html( $role_name ), esc_html__( 'Admin Bar Settings', 'dashboard-access-control' ) );
+		echo '</div>';
+		echo '<div class="dac-card-body">';
 
 		echo '<table class="form-table">';
 
 		// Hide on frontend.
-		echo '<tr><th>' . esc_html__( 'Hide on Frontend', 'dashboard-access-control' ) . '</th><td>';
+		echo '<tr><th scope="row">' . esc_html__( 'Hide on Frontend', 'dashboard-access-control' ) . '</th><td>';
 		printf(
-			'<label><input type="checkbox" name="dac_bar[hide_frontend]" value="1" %s> %s</label>',
-			checked( ! empty( $bar['hide_frontend'] ), true, false ),
-			esc_html__( 'Hide the admin bar on the frontend (site pages)', 'dashboard-access-control' )
+			'<label class="dac-toggle" title="%s"><input type="checkbox" name="dac_bar[hide_frontend]" value="1" class="dac-toggle-input" %s /><span class="dac-toggle-slider"></span></label>',
+			esc_attr__( 'Toggle visibility', 'dashboard-access-control' ),
+			checked( ! empty( $bar['hide_frontend'] ), true, false )
 		);
+		echo '<span class="description"> ' . esc_html__( 'Hide the admin bar on the frontend (site pages)', 'dashboard-access-control' ) . '</span>';
 		echo '</td></tr>';
 
 		// Hide on backend.
-		echo '<tr><th>' . esc_html__( 'Hide on Backend', 'dashboard-access-control' ) . '</th><td>';
+		echo '<tr><th scope="row">' . esc_html__( 'Hide on Backend', 'dashboard-access-control' ) . '</th><td>';
 		printf(
-			'<label><input type="checkbox" name="dac_bar[hide_backend]" value="1" %s> %s</label>',
-			checked( ! empty( $bar['hide_backend'] ), true, false ),
-			esc_html__( 'Hide the admin bar in wp-admin (does NOT block access)', 'dashboard-access-control' )
+			'<label class="dac-toggle" title="%s"><input type="checkbox" name="dac_bar[hide_backend]" value="1" class="dac-toggle-input" %s /><span class="dac-toggle-slider"></span></label>',
+			esc_attr__( 'Toggle visibility', 'dashboard-access-control' ),
+			checked( ! empty( $bar['hide_backend'] ), true, false )
 		);
+		echo '<span class="description"> ' . esc_html__( 'Hide the admin bar in wp-admin (does NOT block access)', 'dashboard-access-control' ) . '</span>';
 		echo '</td></tr>';
 
 		echo '</table>';
 
 		// Node removal.
-		echo '<h4>' . esc_html__( 'Remove Specific Toolbar Nodes', 'dashboard-access-control' ) . '</h4>';
-		echo '<p>' . esc_html__( 'Select individual toolbar items to remove for this role.', 'dashboard-access-control' ) . '</p>';
+		echo '<h3>' . esc_html__( 'Remove Specific Toolbar Nodes', 'dashboard-access-control' ) . '</h3>';
+		echo '<p>' . esc_html__( 'Toggle individual toolbar items to remove for this role.', 'dashboard-access-control' ) . '</p>';
 
 		echo '<table class="widefat striped">';
 		echo '<thead><tr>';
-		echo '<th style="width:40px;">' . esc_html__( 'Show', 'dashboard-access-control' ) . '</th>';
-		echo '<th style="width:40px;">' . esc_html__( 'Hide', 'dashboard-access-control' ) . '</th>';
+		echo '<th style="width:80px;">' . esc_html__( 'Status', 'dashboard-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'Toolbar Node', 'dashboard-access-control' ) . '</th>';
 		echo '<th>' . esc_html__( 'ID', 'dashboard-access-control' ) . '</th>';
 		echo '</tr></thead>';
@@ -181,13 +187,10 @@ final class AdminBarTab {
 
 		foreach ( self::KNOWN_NODES as $node_id => $label ) {
 			$is_removed = in_array( $node_id, $removed, true );
+			echo '<tr>';
 			printf(
-				'<tr><td><input type="radio" name="dac_nodes[%s]" value="0" %s></td>',
-				esc_attr( $node_id ),
-				checked( $is_removed, false, false )
-			);
-			printf(
-				'<td><input type="radio" name="dac_nodes[%s]" value="1" %s></td>',
+				'<td><label class="dac-toggle" title="%s"><input type="checkbox" name="dac_nodes[%s]" value="1" class="dac-toggle-input" %s /><span class="dac-toggle-slider"></span></label></td>',
+				esc_attr__( 'Toggle visibility', 'dashboard-access-control' ),
 				esc_attr( $node_id ),
 				checked( $is_removed, true, false )
 			);
@@ -198,7 +201,12 @@ final class AdminBarTab {
 
 		echo '</tbody></table>';
 
+		echo '<div class="dac-submit-row">';
 		submit_button( __( 'Save Admin Bar Settings', 'dashboard-access-control' ), 'primary', 'submit', false );
+		echo '</div>';
+
+		echo '</div>';
+		echo '</div>';
 		echo '</form>';
 	}
 
