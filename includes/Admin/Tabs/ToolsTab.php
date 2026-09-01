@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace DashboardAccessControl\Admin\Tabs;
 
 use DashboardAccessControl\Core\Constants;
+use DashboardAccessControl\RoleAccess\RoleProfileRepository;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,9 +17,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class ToolsTab {
 
 	private Options $options;
+	private RoleProfileRepository $repository;
 
 	public function __construct( Options $options ) {
-		$this->options = $options;
+		$this->options    = $options;
+		$this->repository = new RoleProfileRepository( $options );
 	}
 
 	public static function id(): string {
@@ -118,11 +121,19 @@ final class ToolsTab {
 		// Backup current settings.
 		$this->backup_current();
 
-		// Merge profiles.
-		$existing = get_option( Constants::OPT_ROLE_PROFILES, [] );
+		// Bug 7 fix: sanitize imported profiles via repository->save() (which calls validate())
+		// instead of writing raw data directly with update_option().
 		$imported = $data['profiles'] ?? [];
-		$merged   = array_merge( $existing, $imported );
-		update_option( Constants::OPT_ROLE_PROFILES, $merged );
+		if ( is_array( $imported ) ) {
+			$roles = wp_roles()->roles;
+			foreach ( $imported as $role_slug => $profile ) {
+				$role_slug = sanitize_key( $role_slug );
+				// Only import profiles for known roles.
+				if ( isset( $roles[ $role_slug ] ) && is_array( $profile ) ) {
+					$this->repository->save( $role_slug, $profile );
+				}
+			}
+		}
 
 		// Merge white label.
 		if ( ! empty( $data['white_label'] ) && is_array( $data['white_label'] ) ) {
@@ -140,7 +151,7 @@ final class ToolsTab {
 	}
 
 	/**
-	 * Backup current settings to a transient (24h) as safety net.
+	 * Backup current settings to an option as a safety net.
 	 */
 	private function backup_current(): void {
 		$backup = [
@@ -148,7 +159,8 @@ final class ToolsTab {
 			'white_label' => get_option( Constants::OPT_WHITE_LABEL, [] ),
 			'general'     => get_option( Constants::OPT_GENERAL, [] ),
 		];
-		set_option( Constants::OPT_LAST_BACKUP, $backup );
+		// Bug 1 fix: was set_option() which doesn't exist — use update_option().
+		update_option( Constants::OPT_LAST_BACKUP, $backup );
 	}
 
 	/**
@@ -174,7 +186,8 @@ final class ToolsTab {
 	 * Restore the last backup.
 	 */
 	private function handle_restore_backup(): void {
-		$backup = get_option( Constants::OPT_PREFIX . 'last_backup', null );
+		// Bug 2 fix: was Constants::OPT_PREFIX which doesn't exist — use Constants::OPT_LAST_BACKUP.
+		$backup = get_option( Constants::OPT_LAST_BACKUP, null );
 		if ( ! $backup || ! is_array( $backup ) ) {
 			add_settings_error( 'dac_notices', 'no_backup', __( 'No backup found.', 'dashboard-access-control' ), 'error' );
 			return;

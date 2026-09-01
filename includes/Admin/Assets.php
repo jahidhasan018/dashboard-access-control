@@ -45,5 +45,14 @@ final class Assets {
 			DAC_VERSION,
 			true
 		);
+
+		wp_localize_script(
+			'dac-admin',
+			'dacI18n',
+			[
+				'visible' => __( 'Visible', 'dashboard-access-control' ),
+				'hidden'  => __( 'Hidden', 'dashboard-access-control' ),
+			]
+		);
 	}
 }

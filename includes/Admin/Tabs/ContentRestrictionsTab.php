@@ -46,7 +46,10 @@ final class ContentRestrictionsTab {
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		// Role selector.
+		// Role selector card wrapped in native GET form.
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( Constants::MENU_SLUG ) . '">';
+		echo '<input type="hidden" name="tab" value="' . esc_attr( self::id() ) . '">';
 		echo '<div class="dac-card dac-role-selector">';
 		echo '<div class="dac-card-header">';
 		echo '<span class="dac-icon dac-icon-users"></span>';
@@ -66,12 +69,13 @@ final class ContentRestrictionsTab {
 		}
 		echo '</select> ';
 		printf(
-			'<button type="button" class="button button-primary dac-btn-load" id="dac-load-restrict-role">%s</button>',
+			'<button type="submit" class="button button-primary dac-btn-load" id="dac-load-restrict-role">%s</button>',
 			esc_html__( 'Load Rules', 'dashboard-access-control' )
 		);
 		echo '</div>';
 		echo '</div>';
 		echo '</div>';
+		echo '</form>';
 
 		if ( $selected ) {
 			$this->render_restrictions_form( $selected );

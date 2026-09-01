@@ -7,27 +7,25 @@
 
 	document.addEventListener('DOMContentLoaded', function () {
 
-		/* ── Role Selector ──────────────────────────────────────────────── */
-		var roleSelect  = document.getElementById('dac-role-select') || document.getElementById('dac-menu-role');
-		var loadBtn     = document.getElementById('dac-load-role') || document.getElementById('dac-load-menu-role');
+		/* ── Universal Role Selector for All Tabs ───────────────────────── */
+		var rolePickers = document.querySelectorAll('.dac-role-selector');
+		rolePickers.forEach(function (container) {
+			var select = container.querySelector('select');
+			if (!select) return;
 
-		if (roleSelect && loadBtn) {
-			loadBtn.addEventListener('click', function (e) {
-				e.preventDefault();
-				var role = roleSelect.value;
-				if (!role) return;
-				var url = new URL(window.location.href);
-				url.searchParams.set('role', role);
-				window.location.href = url.toString();
-			});
-
-			roleSelect.addEventListener('keydown', function (e) {
-				if (e.key === 'Enter') {
-					e.preventDefault();
-					loadBtn.click();
+			select.addEventListener('change', function () {
+				if (select.value) {
+					if (select.form) {
+						select.form.submit();
+					} else {
+						var url = new URL(window.location.href);
+						url.searchParams.set('role', select.value);
+						url.searchParams.delete('saved');
+						window.location.href = url.toString();
+					}
 				}
 			});
-		}
+		});
 
 		/* ── Accordion Toggle ──────────────────────────────────────────── */
 		var accordion = document.getElementById('dac-menu-accordion');
@@ -90,6 +88,13 @@
 			});
 		}
 
+		function getI18n(key, fallback) {
+			if (typeof dacI18n !== 'undefined' && dacI18n && dacI18n[key]) {
+				return dacI18n[key];
+			}
+			return fallback;
+		}
+
 		/* ── Individual Toggle ─────────────────────────────────────────── */
 		accordion.addEventListener('change', function (e) {
 			if (!e.target.classList.contains('dac-toggle-input')) return;
@@ -107,13 +112,13 @@
 				item.classList.add('dac-item-hidden');
 				if (badge) {
 					badge.className = 'dac-badge dac-badge-hidden';
-					badge.textContent = dacI18n.hidden || 'Hidden';
+					badge.textContent = getI18n('hidden', 'Hidden');
 				}
 			} else {
 				item.classList.remove('dac-item-hidden');
 				if (badge) {
 					badge.className = 'dac-badge dac-badge-visible';
-					badge.textContent = dacI18n.visible || 'Visible';
+					badge.textContent = getI18n('visible', 'Visible');
 				}
 			}
 		}

@@ -55,38 +55,25 @@ final class DashboardWidgetEnforcer {
 			if ( ! $hidden ) {
 				continue;
 			}
+			$widget_id = (string) $widget_id;
 
-			// Remove from dashboard meta boxes.
-			if ( isset( $wp_meta_boxes['dashboard']['normal']['default'][ $widget_id ] ) ) {
-				unset( $wp_meta_boxes['dashboard']['normal']['default'][ $widget_id ] );
+			// Remove from all dashboard contexts and priorities.
+			foreach ( [ 'normal', 'side', 'column3', 'column4' ] as $context ) {
+				foreach ( [ 'core', 'high', 'default', 'low' ] as $priority ) {
+					if ( isset( $wp_meta_boxes['dashboard'][ $context ][ $priority ][ $widget_id ] ) ) {
+						unset( $wp_meta_boxes['dashboard'][ $context ][ $priority ][ $widget_id ] );
+					}
+				}
+				remove_meta_box( $widget_id, 'dashboard', $context );
 			}
-
-			// Also try side column.
-			if ( isset( $wp_meta_boxes['dashboard']['side']['default'][ $widget_id ] ) ) {
-				unset( $wp_meta_boxes['dashboard']['side']['default'][ $widget_id ] );
-			}
-
-			// Remove the postmeta box too if it exists.
-			remove_meta_box( $widget_id, 'dashboard', 'normal' );
-			remove_meta_box( $widget_id, 'dashboard', 'side' );
 		}
 	}
 
 	/**
 	 * Check if a user is excluded from enforcement.
+	 * Bug 9 fix: delegated to RoleResolver::is_excluded() — was duplicated here with a raw get_option() call.
 	 */
 	private function is_excluded( \WP_User $user ): bool {
-		$general  = get_option( Constants::OPT_GENERAL, [] );
-		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
-
-		if ( ! in_array( 'administrator', $user->roles, true ) ) {
-			return false;
-		}
-
-		if ( ! $excluded ) {
-			return false;
-		}
-
-		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
+		return $this->resolver->is_excluded( $user );
 	}
 }

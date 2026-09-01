@@ -70,6 +70,40 @@ final class RoleResolver {
 	}
 
 	/**
+	 * Check if a user is excluded from all DAC enforcement.
+	 *
+	 * Shared by all enforcer classes — avoids duplicate code and raw get_option() calls.
+	 * Administrators are excluded when the "exclude_admins" general setting is enabled.
+	 *
+	 * Bug 9 fix: was duplicated (copy-pasted) across 9 enforcer classes, each calling
+	 * get_option() directly and bypassing the Options cache. Now centralised here.
+	 *
+	 * @param \WP_User $user User to check.
+	 * @return bool True if the user is exempt from enforcement.
+	 */
+	public function is_excluded( \WP_User $user ): bool {
+		// Only administrator-role users can be excluded; all other roles are always enforced.
+		if ( ! in_array( 'administrator', $user->roles, true ) ) {
+			return false;
+		}
+
+		$general  = $this->repository->get_options()->get( Constants::OPT_GENERAL, [] );
+		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
+
+		if ( ! $excluded ) {
+			return false;
+		}
+
+		/**
+		 * Filter whether a user is excluded from all DAC enforcement.
+		 *
+		 * @param bool     $excluded Whether excluded.
+		 * @param \WP_User $user     User object.
+		 */
+		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
+	}
+
+	/**
 	 * Get an empty profile (no restrictions).
 	 *
 	 * @return array<string, mixed>
@@ -94,6 +128,7 @@ final class RoleResolver {
 			Constants::PROFILE_SECURITY    => [
 				'xmlrpc_enabled' => true,
 			],
+			Constants::PROFILE_DASHBOARD   => [],
 		];
 	}
 }

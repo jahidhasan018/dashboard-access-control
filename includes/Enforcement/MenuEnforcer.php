@@ -107,26 +107,9 @@ final class MenuEnforcer {
 
 	/**
 	 * Check if a user is excluded from enforcement.
+	 * Bug 9 fix: delegated to RoleResolver::is_excluded() — was duplicated here with a raw get_option() call.
 	 */
 	private function is_excluded( \WP_User $user ): bool {
-		$general = get_option( Constants::OPT_GENERAL, [] );
-		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
-
-		// Only administrators can be excluded. Non-admins are always enforced.
-		if ( ! in_array( 'administrator', $user->roles, true ) ) {
-			return false;
-		}
-
-		if ( ! $excluded ) {
-			return false;
-		}
-
-		/**
-		 * Filter whether a user is excluded from all enforcement.
-		 *
-		 * @param bool     $excluded Whether excluded.
-		 * @param \WP_User $user     User object.
-		 */
-		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
+		return $this->resolver->is_excluded( $user );
 	}
 }

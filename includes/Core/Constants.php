@@ -50,4 +50,11 @@ final class Constants {
 	// ── Conflict Strategies ────────────────────────────────────────────────
 	public const STRATEGY_LEAST_PRIVILEGE  = 'least_privilege';
 	public const STRATEGY_MOST_PERMISSIVE  = 'most_permissive';
+
+	// ── Dashboard Customization Keys ─────────────────────────────────────
+	public const PROFILE_DASHBOARD = 'dashboard';
+	public const DASH_REMOVE_SCREEN_OPTIONS = 'remove_screen_options';
+	public const DASH_REMOVE_HELP_TAB       = 'remove_help_tab';
+	public const DASH_FULL_WIDTH            = 'full_width_dashboard';
+	public const DASH_DISABLE_DRAGGING      = 'disable_dragging';
 }

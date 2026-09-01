@@ -48,10 +48,18 @@ final class RoleManagerTab {
 		echo '<h2>' . esc_html__( 'Role Profiles', 'dashboard-access-control' ) . '</h2>';
 		echo '<p>' . esc_html__( 'Select a role to configure its access rules. Each role can have its own set of restrictions.', 'dashboard-access-control' ) . '</p>';
 
-		// Role selector.
-		echo '<div class="dac-role-selector">';
-		echo '<label for="dac-role-select"><strong>' . esc_html__( 'Select Role:', 'dashboard-access-control' ) . '</strong></label> ';
-		echo '<select id="dac-role-select" name="role">';
+		// Role selector card wrapped in native GET form.
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( Constants::MENU_SLUG ) . '">';
+		echo '<input type="hidden" name="tab" value="' . esc_attr( self::id() ) . '">';
+		echo '<div class="dac-card dac-role-selector">';
+		echo '<div class="dac-card-header">';
+		echo '<span class="dac-icon dac-icon-users"></span>';
+		echo '<strong>' . esc_html__( 'Select Role', 'dashboard-access-control' ) . '</strong>';
+		echo '</div>';
+		echo '<div class="dac-card-body">';
+		echo '<div class="dac-role-picker">';
+		echo '<select id="dac-role-select" name="role" class="dac-select">';
 		echo '<option value="">' . esc_html__( '— Choose a Role —', 'dashboard-access-control' ) . '</option>';
 		foreach ( $roles as $slug => $role_data ) {
 			$has_profile = isset( $profiles[ $slug ] );
@@ -65,11 +73,13 @@ final class RoleManagerTab {
 		}
 		echo '</select> ';
 		printf(
-			'<a href="%s" class="button" id="dac-load-role">%s</a>',
-			esc_url( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() ) ),
-			esc_html__( 'Load', 'dashboard-access-control' )
+			'<button type="submit" class="button button-primary dac-btn-load" id="dac-load-role">%s</button>',
+			esc_html__( 'Load Profile', 'dashboard-access-control' )
 		);
 		echo '</div>';
+		echo '</div>';
+		echo '</div>';
+		echo '</form>';
 
 		// Profile form (shown when a role is selected).
 		if ( $selected && ! empty( $profile ) ) {
@@ -198,6 +208,9 @@ final class RoleManagerTab {
 		}
 
 		$this->repository->save( $role_slug, $profile );
+
+		// Bug 4 fix: $role_name was undefined in handle_save() — define it here.
+		$role_name = wp_roles()->roles[ $role_slug ]['name'] ?? $role_slug;
 
 		add_action( 'admin_notices', function () use ( $role_name ) {
 			printf(

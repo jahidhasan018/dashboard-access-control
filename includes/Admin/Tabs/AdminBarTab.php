@@ -66,15 +66,23 @@ final class AdminBarTab {
 	public function render(): void {
 		echo '<div class="dac-admin-bar">';
 		echo '<h2>' . esc_html__( 'Admin Bar Control', 'dashboard-access-control' ) . '</h2>';
-		echo '<p>' . esc_html__( 'Configure admin bar visibility per role. Hiding on backend does NOT block wp-admin access — it only hides the toolbar.', 'dashboard-access-control' ) . '</p>';
+		echo '<p class="dac-subtitle">' . esc_html__( 'Configure admin bar visibility per role. Hiding on backend does NOT block wp-admin access — it only hides the toolbar.', 'dashboard-access-control' ) . '</p>';
 
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		// Role selector.
-		echo '<div class="dac-role-selector">';
-		echo '<label for="dac-bar-role"><strong>' . esc_html__( 'Select Role:', 'dashboard-access-control' ) . '</strong></label> ';
-		echo '<select id="dac-bar-role" name="role">';
+		// Role selector card wrapped in native GET form.
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( Constants::MENU_SLUG ) . '">';
+		echo '<input type="hidden" name="tab" value="' . esc_attr( self::id() ) . '">';
+		echo '<div class="dac-card dac-role-selector">';
+		echo '<div class="dac-card-header">';
+		echo '<span class="dac-icon dac-icon-users"></span>';
+		echo '<strong>' . esc_html__( 'Select Role', 'dashboard-access-control' ) . '</strong>';
+		echo '</div>';
+		echo '<div class="dac-card-body">';
+		echo '<div class="dac-role-picker">';
+		echo '<select id="dac-bar-role" name="role" class="dac-select">';
 		echo '<option value="">' . esc_html__( '— Choose a Role —', 'dashboard-access-control' ) . '</option>';
 		foreach ( $roles as $slug => $role_data ) {
 			printf(
@@ -86,11 +94,13 @@ final class AdminBarTab {
 		}
 		echo '</select> ';
 		printf(
-			'<a href="%s" class="button" id="dac-load-bar-role">%s</a>',
-			esc_url( admin_url( 'options-general.php?page=' . Constants::MENU_SLUG . '&tab=' . self::id() ) ),
-			esc_html__( 'Load', 'dashboard-access-control' )
+			'<button type="submit" class="button button-primary dac-btn-load" id="dac-load-bar-role">%s</button>',
+			esc_html__( 'Load Rules', 'dashboard-access-control' )
 		);
 		echo '</div>';
+		echo '</div>';
+		echo '</div>';
+		echo '</form>';
 
 		if ( $selected ) {
 			$this->render_bar_form( $selected );

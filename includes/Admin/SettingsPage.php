@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace DashboardAccessControl\Admin;
 
 use DashboardAccessControl\Core\Constants;
+use DashboardAccessControl\Core\Container;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,12 +17,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class SettingsPage {
 
 	private Options $options;
+	private ?Container $container;
 
 	/** @var array<string, array{label: string, callback: callable}> */
 	private array $tabs = [];
 
-	public function __construct( Options $options ) {
-		$this->options = $options;
+	public function __construct( Options $options, ?Container $container = null ) {
+		$this->options   = $options;
+		$this->container = $container;
 	}
 
 	/**
@@ -48,6 +51,9 @@ final class SettingsPage {
 
 	/**
 	 * Register the default tabs.
+	 *
+	 * Bug 12 fix: resolve tabs from container when available so singletons and
+	 * Options cache are shared across all tabs and enforcement layers.
 	 */
 	private function register_tabs(): void {
 		$this->tabs = [];
@@ -55,9 +61,11 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\RoleManagerTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\RoleManagerTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\RoleManagerTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\RoleManagerTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\RoleManagerTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+					);
 				$tab->render();
 			},
 		];
@@ -65,9 +73,11 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\MenuControlTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\MenuControlTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\MenuControlTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\MenuControlTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\MenuControlTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+					);
 				$tab->render();
 			},
 		];
@@ -75,9 +85,11 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\DashboardWidgetsTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+					);
 				$tab->render();
 			},
 		];
@@ -85,9 +97,11 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\AdminBarTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\AdminBarTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\AdminBarTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\AdminBarTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\AdminBarTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+					);
 				$tab->render();
 			},
 		];
@@ -95,7 +109,9 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\WhiteLabelTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\WhiteLabelTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\WhiteLabelTab( $this->options );
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\WhiteLabelTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\WhiteLabelTab( $this->options );
 				$tab->render();
 			},
 		];
@@ -103,9 +119,11 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\ContentRestrictionsTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+					);
 				$tab->render();
 			},
 		];
@@ -113,10 +131,12 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\CustomCodeTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\CustomCodeTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\CustomCodeTab(
-					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
-					new \DashboardAccessControl\CustomCode\CodeInjector()
-				);
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\CustomCodeTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\CustomCodeTab(
+						new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options ),
+						new \DashboardAccessControl\CustomCode\CodeInjector()
+					);
 				$tab->render();
 			},
 		];
@@ -124,7 +144,19 @@ final class SettingsPage {
 		$this->tabs[ \DashboardAccessControl\Admin\Tabs\ToolsTab::id() ] = [
 			'label'    => \DashboardAccessControl\Admin\Tabs\ToolsTab::label(),
 			'callback' => function () {
-				$tab = new \DashboardAccessControl\Admin\Tabs\ToolsTab( $this->options );
+				$tab = $this->container
+					? $this->container->get( \DashboardAccessControl\Admin\Tabs\ToolsTab::class )
+					: new \DashboardAccessControl\Admin\Tabs\ToolsTab( $this->options );
+				$tab->render();
+			},
+		];
+
+		$this->tabs[ \DashboardAccessControl\Admin\Tabs\DashboardCustomizationTab::id() ] = [
+			'label'    => \DashboardAccessControl\Admin\Tabs\DashboardCustomizationTab::label(),
+			'callback' => function () {
+				$tab = new \DashboardAccessControl\Admin\Tabs\DashboardCustomizationTab(
+					new \DashboardAccessControl\RoleAccess\RoleProfileRepository( $this->options )
+				);
 				$tab->render();
 			},
 		];

@@ -49,7 +49,7 @@ final class MenuControlTab {
 		self::$captured_menu    = $menu ?? [];
 		self::$captured_submenu = $submenu ?? [];
 
-		// Store available menus so handle_save (on admin_init) can access them.
+		// Store available menus (both top-level and submenus) so handle_save (on admin_init) can access them.
 		$available = [];
 		foreach ( self::$captured_menu as $menu_item ) {
 			$slug  = $menu_item[2] ?? '';
@@ -58,7 +58,24 @@ final class MenuControlTab {
 				$available[ $slug ] = $label;
 			}
 		}
-		update_option( 'dac_available_menus', $available );
+
+		foreach ( self::$captured_submenu as $parent_slug => $sub_items ) {
+			if ( ! is_array( $sub_items ) ) {
+				continue;
+			}
+			foreach ( $sub_items as $sub_item ) {
+				$slug  = $sub_item[2] ?? '';
+				$label = wp_strip_all_tags( $sub_item[0] ?? '' );
+				if ( '' !== $slug ) {
+					$available[ $slug ] = $label;
+				}
+			}
+		}
+
+		$stored = get_option( 'dac_available_menus', [] );
+		if ( $stored !== $available ) {
+			update_option( 'dac_available_menus', $available );
+		}
 	}
 
 	/**
@@ -72,7 +89,10 @@ final class MenuControlTab {
 		$roles    = wp_roles()->roles;
 		$selected = isset( $_GET['role'] ) ? sanitize_text_field( wp_unslash( $_GET['role'] ) ) : '';
 
-		// Role selector card.
+		// Role selector card wrapped in native GET form.
+		echo '<form method="get" action="' . esc_url( admin_url( 'options-general.php' ) ) . '">';
+		echo '<input type="hidden" name="page" value="' . esc_attr( Constants::MENU_SLUG ) . '">';
+		echo '<input type="hidden" name="tab" value="' . esc_attr( self::id() ) . '">';
 		echo '<div class="dac-card dac-role-selector">';
 		echo '<div class="dac-card-header">';
 		echo '<span class="dac-icon dac-icon-users"></span>';
@@ -92,12 +112,13 @@ final class MenuControlTab {
 		}
 		echo '</select> ';
 		printf(
-			'<button type="button" class="button button-primary dac-btn-load" id="dac-load-menu-role">%s</button>',
+			'<button type="submit" class="button button-primary dac-btn-load" id="dac-load-menu-role">%s</button>',
 			esc_html__( 'Load Rules', 'dashboard-access-control' )
 		);
 		echo '</div>';
 		echo '</div>';
 		echo '</div>';
+		echo '</form>';
 
 		if ( $selected ) {
 			$this->render_menu_accordion( $selected );
@@ -316,6 +337,12 @@ final class MenuControlTab {
 		echo '<span class="dac-toggle-slider"></span>';
 		echo '</label>';
 
+		printf(
+			'<input type="hidden" name="dac_all_rendered_menus[%s]" value="%s" />',
+			esc_attr( $slug ),
+			esc_attr( $item['label'] )
+		);
+
 		echo '<span class="dac-badge ' . esc_attr( $badge_class ) . '">' . esc_html( $badge_text ) . '</span>';
 		echo '</div>';
 		echo '</div>';
@@ -346,6 +373,12 @@ final class MenuControlTab {
 				);
 				echo '<span class="dac-toggle-slider"></span>';
 				echo '</label>';
+
+				printf(
+					'<input type="hidden" name="dac_all_rendered_menus[%s]" value="%s" />',
+					esc_attr( $child['slug'] ),
+					esc_attr( $child['label'] )
+				);
 
 				echo '<span class="dac-badge ' . esc_attr( $child_badge ) . '">' . esc_html( $child_text ) . '</span>';
 				echo '</div>';
@@ -398,6 +431,11 @@ final class MenuControlTab {
 			return;
 		}
 
+		$submitted_all = $_POST['dac_all_rendered_menus'] ?? [];
+		if ( ! is_array( $submitted_all ) ) {
+			$submitted_all = [];
+		}
+
 		$raw_menus = $_POST['dac_menus'] ?? [];
 		if ( ! is_array( $raw_menus ) ) {
 			$raw_menus = [];
@@ -407,18 +445,35 @@ final class MenuControlTab {
 		$hidden_slugs = [];
 		foreach ( $raw_menus as $slug => $data ) {
 			if ( '1' === ( $data['hidden'] ?? '0' ) ) {
-				$hidden_slugs[] = sanitize_text_field( wp_unslash( $slug ) );
+				$hidden_slugs[] = sanitize_text_field( wp_unslash( (string) $slug ) );
 			}
 		}
 
 		// Load ALL available menus from the option saved during capture_menu.
 		$available = get_option( 'dac_available_menus', [] );
+		if ( ! is_array( $available ) ) {
+			$available = [];
+		}
+
+		// Merge all known menus: rendered in this form + captured in option.
+		$all_known = [];
+		foreach ( $submitted_all as $slug => $label ) {
+			$s = sanitize_text_field( wp_unslash( (string) $slug ) );
+			if ( '' !== $s ) {
+				$all_known[ $s ] = sanitize_text_field( wp_unslash( (string) $label ) );
+			}
+		}
+		foreach ( $available as $slug => $label ) {
+			$s = (string) $slug;
+			if ( '' !== $s && ! isset( $all_known[ $s ] ) ) {
+				$all_known[ $s ] = (string) $label;
+			}
+		}
 
 		// Load existing profile to preserve labels, icons.
 		$profile = $this->repository->get( $role_slug );
 		$existing_menus = $profile[ Constants::PROFILE_MENUS ] ?? [];
 
-		// Build a lookup of existing menus by slug for labels/icons.
 		$existing_by_slug = [];
 		foreach ( $existing_menus as $item ) {
 			$slug = $item['slug'] ?? '';
@@ -427,15 +482,14 @@ final class MenuControlTab {
 			}
 		}
 
-		// Rebuild menus: iterate ALL available menus, set hidden status from form.
+		// Rebuild menus: set hidden status based on submitted form.
 		$menus = [];
-		foreach ( $available as $slug => $label ) {
-			// Use existing label/icon if available, otherwise use captured label.
+		foreach ( $all_known as $slug => $label ) {
 			$existing = $existing_by_slug[ $slug ] ?? [];
 			$menus[] = [
 				'slug'   => $slug,
 				'hidden' => in_array( $slug, $hidden_slugs, true ),
-				'label'  => $existing['label'] ?? $label,
+				'label'  => ! empty( $existing['label'] ) ? $existing['label'] : $label,
 				'icon'   => $existing['icon'] ?? '',
 			];
 		}

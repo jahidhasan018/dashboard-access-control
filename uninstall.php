@@ -7,6 +7,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
 
+// Bug 3 fix: load autoloader so namespaced classes (Constants, Capabilities) are available.
+if ( file_exists( plugin_dir_path( __FILE__ ) . 'vendor/autoload.php' ) ) {
+	require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+}
+
 use DashboardAccessControl\Core\Constants;
 use DashboardAccessControl\Support\Capabilities;
 

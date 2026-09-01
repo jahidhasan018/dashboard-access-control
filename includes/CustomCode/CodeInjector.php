@@ -48,7 +48,11 @@ final class CodeInjector {
 			return;
 		}
 		echo "\n<!-- Dashboard Access Control — Custom JS -->\n";
-		echo '<script id="dac-custom-js">' . wp_strip_all_tags( $js ) . "</script>\n";
+		// Bug 6 fix: do NOT use wp_strip_all_tags() on JS — it strips JS operators
+		// containing < and >, making all custom JS non-functional.
+		// Sanitization is applied at save-time (CustomCodeTab::handle_save()).
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo '<script id="dac-custom-js">' . $js . "</script>\n";
 	}
 
 	/**

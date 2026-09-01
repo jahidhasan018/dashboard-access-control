@@ -25,7 +25,10 @@
 - 2026-08-31 — Phase 5 complete. Content Restrictions + Layer 4 guards (AJAX, REST, XML-RPC).
 - 2026-08-31 — Phase 6 complete. Custom Code (CSS/JS per role via hidden CPT) + Tools (export/import/reset/uninstall toggle).
 - 2026-08-31 — Phase 7 complete. .pot file, readme.txt, CHANGELOG.md, PHPUnit tests, QA matrix, PHPDoc on all classes.
-- 2026-08-31 — Bug fixes: RoleResolver type mismatch, missing OPT_LAST_BACKUP constant.
+- 2026-08-31 — Comprehensive code review & bug fixes: fixed 12 bugs (set_option typo, OPT_PREFIX typo, uninstall.php autoloader, RoleManagerTab undefined $role_name, CustomCode sanitization & capability gate, CodeInjector JS output unstripped, ToolsTab import profile validation, MenuControlTab DB write optimization, centralized is_excluded across 9 enforcer classes, CapabilityEnforcer object cap argument index, ConflictResolver most_permissive merge logic, SettingsPage container resolution).
+- 2026-08-31 — Menu Control save bug fix: localized dacI18n in Assets.php, added fallback in admin.js, captured submenus in capture_menu(), added dac_all_rendered_menus inputs in MenuControlTab.php to ensure unhidden/visible toggles reliably save.
+- 2026-08-31 — Dashboard Widgets & Role Picker bug fix: made role selection universal across all tabs using native HTML GET forms with auto-submit & submit buttons.
+- 2026-08-31 — Dashboard Widgets UI & Plugin Discovery overhaul: redesigned Dashboard Widgets tab to match Admin Menu Control styling (search filter, Hide All / Show All, live stats bar, toggle badges), dynamically executes wp_dashboard_setup to discover all Core and third-party plugin widgets, and updated DashboardWidgetEnforcer to cleanly remove hidden widgets across all contexts and priorities.
 
 ## Known issues / carried-over notes
 - (none)

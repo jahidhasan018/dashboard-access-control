@@ -79,8 +79,9 @@ final class CapabilityEnforcer {
 
 		// Check meta caps (edit_post, delete_post, etc.) by checking the object's post type
 		// against hidden menu slugs — if the post type's menu is hidden, revoke its caps.
-		if ( isset( $args[0] ) && in_array( $args[0], [ 'edit_post', 'delete_post', 'read_post' ], true ) && isset( $args[1] ) ) {
-			$post_id   = (int) $args[1];
+		// Bug 10 fix: $args[1] is the user_id, $args[2] is the object ID (post_id).
+		if ( isset( $args[0] ) && in_array( $args[0], [ 'edit_post', 'delete_post', 'read_post' ], true ) && isset( $args[2] ) ) {
+			$post_id   = (int) $args[2];
 			$post_type = get_post_type( $post_id );
 			if ( $post_type ) {
 				$type_menu = 'edit.php?post_type=' . $post_type;
@@ -95,19 +96,9 @@ final class CapabilityEnforcer {
 
 	/**
 	 * Check if a user is excluded from enforcement.
+	 * Bug 9 fix: delegated to RoleResolver::is_excluded() — was duplicated here with a raw get_option() call.
 	 */
 	private function is_excluded( \WP_User $user ): bool {
-		$general  = get_option( Constants::OPT_GENERAL, [] );
-		$excluded = $general[ Constants::GENERAL_EXCLUDE_ADMINS ] ?? true;
-
-		if ( ! in_array( 'administrator', $user->roles, true ) ) {
-			return false;
-		}
-
-		if ( ! $excluded ) {
-			return false;
-		}
-
-		return (bool) apply_filters( 'dac_is_user_excluded', true, $user );
+		return $this->resolver->is_excluded( $user );
 	}
 }

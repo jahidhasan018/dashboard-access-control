@@ -55,6 +55,16 @@ final class RoleProfileRepository {
 	}
 
 	/**
+	 * Expose the Options instance for use by dependent classes (e.g. RoleResolver::is_excluded).
+	 *
+	 * Bug 9 fix: allows RoleResolver to read general settings through the cached
+	 * Options object instead of calling get_option() directly.
+	 */
+	public function get_options(): Options {
+		return $this->options;
+	}
+
+	/**
 	 * Delete a role profile.
 	 */
 	public function delete( string $role_slug ): void {
@@ -88,6 +98,7 @@ final class RoleProfileRepository {
 			Constants::PROFILE_SECURITY    => [
 				'xmlrpc_enabled' => true,
 			],
+			Constants::PROFILE_DASHBOARD   => [],
 		];
 	}
 

@@ -51,8 +51,18 @@ final class CustomCodeTab {
 			return;
 		}
 
-		$css = isset( $_POST['dac_custom_css'] ) ? wp_unslash( $_POST['dac_custom_css'] ) : '';
-		$js  = isset( $_POST['dac_custom_js'] ) ? wp_unslash( $_POST['dac_custom_js'] ) : '';
+		// Bug 5 fix: sanitize CSS with wp_strip_all_tags() to prevent stored XSS.
+		$css = isset( $_POST['dac_custom_css'] ) ? wp_strip_all_tags( wp_unslash( $_POST['dac_custom_css'] ) ) : '';
+
+		// Bug 5 fix: JS requires unfiltered_html equivalent — only admins may save JS.
+		// Stored without modification so it actually works at output time (Bug 6 fix).
+		$js = '';
+		if ( current_user_can( 'unfiltered_html' ) || in_array( 'administrator', wp_get_current_user()->roles, true ) ) {
+			$js = isset( $_POST['dac_custom_js'] ) ? wp_unslash( $_POST['dac_custom_js'] ) : '';
+		} else {
+			add_settings_error( 'dac_notices', 'custom_js_denied', __( 'Custom JavaScript can only be saved by Administrators.', 'dashboard-access-control' ), 'error' );
+			// Still save CSS if provided.
+		}
 
 		$this->injector->save_meta( $role_id, [
 			'css' => $css,

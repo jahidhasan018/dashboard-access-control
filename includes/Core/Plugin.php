@@ -29,6 +29,8 @@ use DashboardAccessControl\Enforcement\XmlRpcGuard;
 use DashboardAccessControl\CustomCode\CodeInjector;
 use DashboardAccessControl\Admin\Tabs\CustomCodeTab;
 use DashboardAccessControl\Admin\Tabs\ToolsTab;
+use DashboardAccessControl\Admin\Tabs\DashboardCustomizationTab;
+use DashboardAccessControl\Enforcement\DashboardCustomizationEnforcer;
 use DashboardAccessControl\Support\Options;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -213,6 +215,20 @@ final class Plugin {
 		);
 
 		$this->container->set(
+			DashboardCustomizationTab::class,
+			function ( Container $c ): DashboardCustomizationTab {
+				return new DashboardCustomizationTab( $c->get( RoleProfileRepository::class ) );
+			}
+		);
+
+		$this->container->set(
+			DashboardCustomizationEnforcer::class,
+			function ( Container $c ): DashboardCustomizationEnforcer {
+				return new DashboardCustomizationEnforcer( $c->get( RoleResolver::class ) );
+			}
+		);
+
+		$this->container->set(
 			MenuEnforcer::class,
 			function ( Container $c ): MenuEnforcer {
 				return new MenuEnforcer( $c->get( RoleResolver::class ) );
@@ -250,7 +266,7 @@ final class Plugin {
 		$this->container->set(
 			SettingsPage::class,
 			function ( Container $c ): SettingsPage {
-				return new SettingsPage( $c->get( Options::class ) );
+				return new SettingsPage( $c->get( Options::class ), $c );
 			}
 		);
 
@@ -339,6 +355,14 @@ final class Plugin {
 		// Tools tab: handle saves.
 		$tools_tab = $this->container->get( ToolsTab::class );
 		add_action( 'admin_init', [ $tools_tab, 'handle_save' ] );
+
+		// Dashboard customization tab: handle saves.
+		$dash_tab = $this->container->get( DashboardCustomizationTab::class );
+		add_action( 'admin_init', [ $dash_tab, 'handle_save' ] );
+
+		// Dashboard customization enforcer.
+		$dash_enforcer = $this->container->get( DashboardCustomizationEnforcer::class );
+		$dash_enforcer->init();
 
 		// Enforcement layers.
 		$menu_enforcer = $this->container->get( MenuEnforcer::class );
