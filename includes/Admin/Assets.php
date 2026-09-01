@@ -45,7 +45,7 @@ final class Assets {
 		wp_enqueue_script(
 			'dac-admin',
 			DAC_PLUGIN_URL . 'assets/js/admin.js',
-			[],
+			[ 'jquery', 'wp-color-picker' ],
 			DAC_VERSION,
 			true
 		);

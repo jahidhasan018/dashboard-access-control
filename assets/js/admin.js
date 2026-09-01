@@ -218,10 +218,16 @@
 
 		/* ── Init stats on load ────────────────────────────────────────── */
 		updateStats();
-
-		/* ── Color Picker Init ────────────────────────────────────────── */
-		if (typeof jQuery !== 'undefined' && jQuery.fn.wpColorPicker) {
-			jQuery('.dac-color-picker').wpColorPicker();
-		}
 	});
+
+	/* ── Color Picker Init (jQuery required) ─────────────────────────── */
+	if (typeof jQuery !== 'undefined') {
+		jQuery(document).ready(function ($) {
+			$('.dac-color-picker').each(function () {
+				if (!$(this).hasClass('wp-picker-container')) {
+					$(this).wpColorPicker();
+				}
+			});
+		});
+	}
 })();
